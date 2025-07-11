@@ -61,13 +61,14 @@ export default {
 <style scoped>
 .dashboard {
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background: var(--bg-secondary);
 }
 
 .header {
-  background: white;
-  padding: 1rem 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: var(--bg-primary);
+  padding: var(--spacing-lg) var(--spacing-2xl);
+  box-shadow: var(--shadow-md);
+  border-bottom: 1px solid var(--border-primary);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -75,36 +76,66 @@ export default {
 
 .header h1 {
   margin: 0;
-  color: #333;
+  color: var(--text-primary);
+  font-size: var(--text-2xl);
+  font-weight: 600;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--spacing-lg);
+}
+
+.user-info span {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
 }
 
 .logout-btn {
-  padding: 0.5rem 1rem;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--accent-danger);
+  color: var(--text-inverse);
+  border: 1px solid var(--accent-danger);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  font-family: var(--font-sans);
 }
 
 .logout-btn:hover {
-  background-color: #c82333;
+  background-color: #DC2626;
+  border-color: #DC2626;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .main-content {
-  padding: 2rem;
-  max-width: 1200px;
+  padding: var(--spacing-2xl);
+  max-width: 1400px;
   margin: 0 auto;
 }
 
 .documents-section {
-  margin-bottom: 2rem;
+  margin-bottom: var(--spacing-2xl);
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: var(--spacing-md) var(--spacing-lg);
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .header h1 {
+    font-size: var(--text-xl);
+  }
+  
+  .main-content {
+    padding: var(--spacing-lg);
+  }
 }
 </style>

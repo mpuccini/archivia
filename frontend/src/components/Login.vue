@@ -131,94 +131,140 @@ export default {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: #f0f0f0;
+  background: linear-gradient(135deg, var(--primary-lighter) 0%, var(--bg-secondary) 100%);
+  padding: var(--spacing-lg);
 }
 
 .login-form {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  min-width: 300px;
+  background: var(--bg-primary);
+  padding: var(--spacing-2xl);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border-primary);
+  min-width: 400px;
+  max-width: 500px;
+  width: 100%;
 }
 
 h1, h2 {
   text-align: center;
-  color: #333;
-  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xl);
+  font-weight: 600;
+}
+
+h1 {
+  font-size: var(--text-2xl);
+  color: var(--primary-dark);
+}
+
+h2 {
+  font-size: var(--text-xl);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--border-primary);
 }
 
 .form-group {
-  margin-bottom: 1rem;
+  margin-bottom: var(--spacing-lg);
 }
 
 label {
   display: block;
-  margin-bottom: 0.5rem;
-  color: #555;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-secondary);
   font-weight: 500;
+  font-size: var(--text-sm);
 }
 
 input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  font-family: var(--font-sans);
 }
 
 input:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(50, 169, 195, 0.1);
 }
 
 button {
   width: 100%;
-  padding: 0.75rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  padding: var(--spacing-md);
+  background-color: var(--primary-color);
+  color: var(--text-inverse);
+  border: 1px solid var(--primary-color);
+  border-radius: var(--radius-md);
+  font-size: var(--text-base);
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all var(--transition-fast);
+  font-family: var(--font-sans);
 }
 
 button:hover:not(:disabled) {
-  background-color: #0056b3;
+  background-color: var(--primary-dark);
+  border-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 button:disabled {
-  background-color: #ccc;
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none !important;
 }
 
 .error {
-  color: #dc3545;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  padding: 0.75rem;
-  border-radius: 4px;
-  margin-bottom: 1rem;
+  background-color: #FEE2E2;
+  color: #991B1B;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid #FECACA;
+  font-size: var(--text-sm);
 }
 
 .register-link {
   text-align: center;
-  margin-top: 1rem;
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--border-primary);
+}
+
+.register-link p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
 }
 
 .register-link a {
-  color: #007bff;
+  color: var(--primary-color);
   text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-fast);
 }
 
 .register-link a:hover {
+  color: var(--primary-dark);
   text-decoration: underline;
 }
 
 .register-form {
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid #eee;
+  margin-top: var(--spacing-xl);
+}
+
+@media (max-width: 480px) {
+  .login-form {
+    min-width: auto;
+    padding: var(--spacing-xl);
+  }
 }
 </style>

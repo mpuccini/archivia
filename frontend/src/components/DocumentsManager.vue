@@ -655,89 +655,109 @@ export default {
 .documents-manager {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--spacing-xl);
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: var(--spacing-2xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .header h2 {
   margin: 0;
-  color: #333;
+  color: var(--text-primary);
+  font-size: var(--text-2xl);
+  font-weight: 600;
 }
 
 .actions {
   display: flex;
-  gap: 10px;
+  gap: var(--spacing-sm);
 }
 
 .btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--text-sm);
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  transition: all 0.2s;
+  gap: var(--spacing-sm);
+  transition: all var(--transition-fast);
+  font-family: var(--font-sans);
+  text-decoration: none;
 }
 
 .btn-primary {
-  background: #007bff;
-  color: white;
+  background: var(--primary-color);
+  color: var(--text-inverse);
+  border-color: var(--primary-color);
 }
 
 .btn-primary:hover {
-  background: #0056b3;
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-secondary {
-  background: #6c757d;
-  color: white;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--border-secondary);
 }
 
 .btn-secondary:hover {
-  background: #545b62;
+  background: var(--bg-tertiary);
+  transform: translateY(-1px);
 }
 
 .btn-outline {
-  background: white;
-  color: #007bff;
-  border: 1px solid #007bff;
+  background: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
 }
 
 .btn-outline:hover {
-  background: #007bff;
-  color: white;
+  background: var(--primary-color);
+  color: var(--text-inverse);
+  transform: translateY(-1px);
 }
 
 .btn-outline.btn-danger {
-  color: #dc3545;
-  border-color: #dc3545;
+  color: var(--accent-danger);
+  border-color: var(--accent-danger);
 }
 
 .btn-outline.btn-danger:hover {
-  background: #dc3545;
-  color: white;
+  background: var(--accent-danger);
+  color: var(--text-inverse);
+  transform: translateY(-1px);
 }
 
 .btn-info {
-  background: #17a2b8;
-  color: white;
+  background: var(--primary-light);
+  color: var(--text-inverse);
+  border-color: var(--primary-light);
 }
 
 .btn-info:hover {
-  background: #138496;
+  background: var(--primary-dark);
+  transform: translateY(-1px);
 }
 
 .btn-sm {
-  padding: 4px 8px;
-  font-size: 12px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--text-xs);
 }
 
 /* Modal styles */
@@ -747,7 +767,8 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(27, 60, 74, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -755,8 +776,10 @@ export default {
 }
 
 .modal-content {
-  background: white;
-  border-radius: 8px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-xl);
   max-width: 800px;
   width: 90%;
   max-height: 90vh;
@@ -767,37 +790,35 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid #eee;
+  padding: var(--spacing-xl);
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .modal-header h3 {
   margin: 0;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
+  color: var(--text-primary);
+  font-size: var(--text-xl);
+  font-weight: 600;
 }
 
 .close-btn:hover {
-  color: #333;
+  color: var(--text-primary);
 }
 
 .modal-body {
-  padding: 20px;
+  padding: var(--spacing-xl);
 }
 
 /* Table styles */
 .table-container {
-  background: white;
-  border-radius: 8px;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
   /* Remove overflow hidden to allow dropdowns to show */
   overflow: visible;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
   /* Ensure container has proper stacking context */
   position: relative;
   z-index: 1;
@@ -810,9 +831,10 @@ export default {
 }
 
 .table-header {
-  padding: 15px 20px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .table-controls {
