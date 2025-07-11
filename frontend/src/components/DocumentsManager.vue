@@ -28,6 +28,7 @@
       :document="selectedDocument" 
       @close="selectedDocument = null" 
       @documentUpdated="handleDocumentUpdated"
+      @documentDeleted="handleDocumentDeleted"
     />
 
     <!-- Documents Table -->
@@ -46,6 +47,9 @@
             </button>
             <button @click="downloadSelectedArchives" class="btn btn-outline">
               <i class="icon-download"></i> Download Archives
+            </button>
+            <button @click="deleteSelectedDocuments" class="btn btn-outline btn-danger">
+              <i class="icon-delete"></i> Delete Selected
             </button>
           </div>
         </div>
@@ -315,6 +319,77 @@ export default {
       }
     }
 
+    const handleDocumentDeleted = (documentId) => {
+      console.log('Document deleted:', documentId)
+      
+      // Remove the document from the list
+      documents.value = documents.value.filter(doc => doc.id !== documentId)
+      
+      // Remove from selected documents if it was selected
+      selectedDocuments.value = selectedDocuments.value.filter(id => id !== documentId)
+      
+      // Clear selected document if it was the deleted one
+      if (selectedDocument.value && selectedDocument.value.id === documentId) {
+        selectedDocument.value = null
+      }
+      
+      // Update pagination if needed
+      updatePagination()
+    }
+
+    const deleteSelectedDocuments = async () => {
+      if (selectedDocuments.value.length === 0) return
+
+      const count = selectedDocuments.value.length
+      const documentText = count === 1 ? 'document' : 'documents'
+      
+      if (!confirm(`Are you sure you want to delete ${count} ${documentText}?\n\nThis will permanently delete:\n- Document metadata\n- All associated files\n- Files from MinIO storage\n\nThis action cannot be undone.`)) {
+        return
+      }
+
+      const deletingIds = [...selectedDocuments.value]
+      let successCount = 0
+      let errorCount = 0
+
+      for (const documentId of deletingIds) {
+        try {
+          const response = await fetch(`${API_URL}/api/documents/${documentId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${authStore.token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+
+          if (response.ok) {
+            successCount++
+            // Remove from documents list
+            documents.value = documents.value.filter(doc => doc.id !== documentId)
+            // Remove from selected documents
+            selectedDocuments.value = selectedDocuments.value.filter(id => id !== documentId)
+          } else {
+            errorCount++
+            console.error(`Failed to delete document ${documentId}:`, response.statusText)
+          }
+        } catch (error) {
+          errorCount++
+          console.error(`Error deleting document ${documentId}:`, error)
+        }
+      }
+
+      // Show result message
+      if (successCount > 0 && errorCount === 0) {
+        alert(`Successfully deleted ${successCount} ${successCount === 1 ? 'document' : 'documents'}.`)
+      } else if (successCount > 0 && errorCount > 0) {
+        alert(`Deleted ${successCount} ${successCount === 1 ? 'document' : 'documents'} successfully.\n${errorCount} ${errorCount === 1 ? 'document' : 'documents'} failed to delete.`)
+      } else {
+        alert(`Failed to delete ${errorCount} ${errorCount === 1 ? 'document' : 'documents'}.`)
+      }
+
+      // Update pagination
+      updatePagination()
+    }
+
     const exportMetadataCSV = async (documentId) => {
       try {
         const response = await axios.post(
@@ -560,6 +635,8 @@ export default {
       openDocumentDetail,
       loadDocumentDetails,
       handleDocumentUpdated,
+      handleDocumentDeleted,
+      deleteSelectedDocuments,
       exportMetadataCSV,
       exportMETSXML,
       downloadFiles,
@@ -636,6 +713,16 @@ export default {
 
 .btn-outline:hover {
   background: #007bff;
+  color: white;
+}
+
+.btn-outline.btn-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-outline.btn-danger:hover {
+  background: #dc3545;
   color: white;
 }
 

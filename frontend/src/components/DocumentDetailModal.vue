@@ -16,14 +16,24 @@
             @click="saveChanges" 
             class="btn btn-sm btn-primary save-btn"
             :disabled="saving"
+            style="display: block !important; visibility: visible !important;"
           >
             {{ saving ? 'Saving...' : 'Save' }}
           </button>
           <button 
             v-if="isEditing" 
+            @click="deleteDocument" 
+            class="btn btn-sm btn-danger delete-btn"
+            :disabled="deleting"
+            style="display: block !important; visibility: visible !important; background-color: #dc3545 !important; color: white !important;"
+          >
+            {{ deleting ? 'Deleting...' : 'Delete Document' }}
+          </button>
+          <button 
+            v-if="isEditing" 
             @click="cancelEdit" 
             class="btn btn-sm btn-secondary cancel-btn"
-            :disabled="saving"
+            :disabled="saving || deleting"
           >
             Cancel
           </button>
@@ -277,13 +287,25 @@
                       <span class="file-type">{{ file.content_type }}</span>
                     </div>
                   </div>
-                  <button 
-                    @click.stop="downloadFile(file)" 
-                    class="btn btn-sm btn-outline-primary download-btn"
-                    title="Download file"
-                  >
-                    ⬇
-                  </button>
+                  <div class="file-actions">
+                    <button 
+                      @click.stop="downloadFile(file)" 
+                      class="btn btn-sm btn-outline-primary download-btn"
+                      title="Download file"
+                    >
+                      ⬇
+                    </button>
+                    <button 
+                      v-if="isEditing"
+                      @click.stop="deleteFile(file)" 
+                      class="btn btn-sm btn-outline-danger delete-file-btn"
+                      title="Delete file"
+                      :disabled="deletingFileId === file.file_id"
+                      style="display: inline-block !important; visibility: visible !important; background-color: transparent !important; color: #dc3545 !important; border: 1px solid #dc3545 !important;"
+                    >
+                      {{ deletingFileId === file.file_id ? '...' : '🗑' }}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -356,7 +378,7 @@ export default {
       required: true
     }
   },
-  emits: ['close', 'documentUpdated'],
+  emits: ['close', 'documentUpdated', 'documentDeleted'],
   setup(props, { emit }) {
     console.log('DocumentDetailModal: Component setup called with document:', props.document)
     console.log('DocumentDetailModal: Document files:', props.document?.document_files)
@@ -369,6 +391,8 @@ export default {
     // Edit state
     const isEditing = ref(false)
     const saving = ref(false)
+    const deleting = ref(false)
+    const deletingFileId = ref(null)
     const editForm = reactive({
       logical_id: '',
       title: '',
@@ -426,6 +450,11 @@ export default {
       }
     }
 
+    const isImageFile = (file) => {
+      if (!file.content_type) return false
+      return file.content_type.startsWith('image/')
+    }
+
     const loadImageData = async (file) => {
       console.log('Loading image data for file:', file)
       try {
@@ -480,11 +509,6 @@ export default {
       let i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
       i = Math.min(i, sizes.length - 1) // Ensure i doesn't exceed array bounds
       return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
-    }
-
-    const isImageFile = (file) => {
-      if (!file.content_type) return false
-      return file.content_type.startsWith('image/')
     }
 
     const downloadFile = async (file) => {
@@ -547,7 +571,9 @@ export default {
 
     // Edit functions
     const startEdit = () => {
+      console.log('startEdit called, setting isEditing to true')
       isEditing.value = true
+      console.log('isEditing is now:', isEditing.value)
       // Initialize form with current document data
       Object.keys(editForm).forEach(key => {
         editForm[key] = props.document[key] || (key === 'total_pages' ? null : '')
@@ -557,6 +583,8 @@ export default {
     const cancelEdit = () => {
       isEditing.value = false
       saving.value = false
+      deleting.value = false
+      deletingFileId.value = null
     }
 
     const saveChanges = async () => {
@@ -592,6 +620,80 @@ export default {
       }
     }
 
+    // Delete functions
+    const deleteFile = async (file) => {
+      if (!confirm(`Are you sure you want to delete the file "${file.filename}"?\n\nThis action cannot be undone.`)) {
+        return
+      }
+
+      deletingFileId.value = file.file_id
+      try {
+        const token = authStore.token
+        const response = await axios.delete(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/files/${file.file_id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        )
+
+        if (response.status === 200) {
+          // Remove the file from the document's file list
+          const fileIndex = props.document.document_files.findIndex(f => f.file_id === file.file_id)
+          if (fileIndex > -1) {
+            props.document.document_files.splice(fileIndex, 1)
+          }
+          
+          // Clear selected file if it was the deleted one
+          if (selectedFile.value && selectedFile.value.file_id === file.file_id) {
+            selectedFile.value = null
+            imageDataUrl.value = ''
+          }
+
+          console.log('File deleted successfully')
+          emit('documentUpdated', props.document)
+        }
+      } catch (error) {
+        console.error('Error deleting file:', error)
+        const errorMessage = error.response?.data?.detail || 'Failed to delete file'
+        alert(`Error: ${errorMessage}`)
+      } finally {
+        deletingFileId.value = null
+      }
+    }
+
+    const deleteDocument = async () => {
+      if (!confirm(`Are you sure you want to delete the document "${props.document.title || props.document.logical_id}"?\n\nThis will permanently delete:\n- Document metadata\n- All associated files\n- Files from MinIO storage\n\nThis action cannot be undone.`)) {
+        return
+      }
+
+      deleting.value = true
+      try {
+        const token = authStore.token
+        const response = await axios.delete(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/documents/${props.document.id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
+        )
+
+        if (response.status === 200) {
+          console.log('Document deleted successfully')
+          emit('documentDeleted', props.document.id)
+          emit('close')
+        }
+      } catch (error) {
+        console.error('Error deleting document:', error)
+        const errorMessage = error.response?.data?.detail || 'Failed to delete document'
+        alert(`Error: ${errorMessage}`)
+      } finally {
+        deleting.value = false
+      }
+    }
+
     return {
       selectedFile,
       imageLoaded,
@@ -599,6 +701,8 @@ export default {
       imageDataUrl,
       isEditing,
       saving,
+      deleting,
+      deletingFileId,
       editForm,
       selectFile,
       loadImageData,
@@ -609,7 +713,9 @@ export default {
       downloadArchive,
       startEdit,
       cancelEdit,
-      saveChanges
+      saveChanges,
+      deleteFile,
+      deleteDocument
     }
   }
 }
@@ -774,7 +880,13 @@ export default {
   margin-right: 1rem;
 }
 
-.download-btn {
+.file-actions {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.download-btn, .delete-file-btn {
   padding: 0.25rem 0.5rem;
   font-size: 0.875rem;
 }
@@ -894,6 +1006,26 @@ export default {
 .btn-outline-primary:hover:not(:disabled) {
   background-color: #007bff;
   color: white;
+}
+
+.btn-outline-danger {
+  background-color: transparent;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+}
+
+.btn-outline-danger:hover:not(:disabled) {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background-color: #c82333;
 }
 
 .btn-sm {
