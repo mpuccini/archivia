@@ -107,7 +107,7 @@
                   <i class="icon-eye"></i>
                 </button>
                 <div class="dropdown">
-                  <button class="btn btn-sm btn-secondary dropdown-toggle" @click="toggleDropdown(document.id)">
+                  <button class="btn btn-sm btn-info dropdown-toggle" @click="toggleDropdown(document.id)" title="Download Options">
                     <i class="icon-download"></i>
                   </button>
                   <div class="dropdown-menu" v-if="openDropdown === document.id" :data-dropdown="document.id">
@@ -900,15 +900,6 @@ export default {
   position: relative;
 }
 
-.dropdown-toggle {
-  border: none;
-  background: #6c757d;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
 .dropdown {
   position: relative;
 }
@@ -975,9 +966,12 @@ export default {
   color: #6c757d;
 }
 
-/* Icons (placeholder - you would use a real icon library) */
+/* Icons - Modern CSS icons */
 .icon-plus::before { content: '+'; }
-.icon-eye::before { content: '👁'; }
+.icon-eye::before { 
+  content: '●';
+  font-size: 12px;
+}
 .icon-download::before { content: '↓'; }
 .icon-csv::before { content: '📊'; }
 .icon-xml::before { content: '📄'; }
