@@ -346,8 +346,8 @@ export default {
 }
 
 .delete-btn:hover:not(:disabled) {
-  background: #ffebee;
-  border-color: #f44336;
+  background: var(--primary-lighter);
+  border-color: var(--accent-danger);
 }
 
 .download-btn:disabled, .delete-btn:disabled {
