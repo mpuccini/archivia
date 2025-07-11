@@ -13,8 +13,13 @@
   
   /* Accent Colors */
   --accent-color: #10B981;
-  --accent-danger: #EF4444;
+  --accent-danger: #B45309;
+  --accent-danger-hover: #92400E;
   --accent-warning: #F59E0B;
+  
+  /* Navigation Colors */
+  --nav-bg: #1E293B;
+  --nav-bg-dark: #0F172A;
   
   /* Background Colors */
   --bg-primary: #FFFFFF;

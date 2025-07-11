@@ -1,6 +1,12 @@
-<template>  <div class="dashboard">
+<template>
+  <div class="dashboard">
     <header class="header">
-      <h1>Archivia Dashboard</h1>
+      <div class="header-brand">
+        <div class="logo">
+          🏛️
+        </div>
+        <h1>Archivia Dashboard</h1>
+      </div>
       <div class="user-info">
         <span>Welcome, {{ authStore.user?.username }}!</span>
         <button @click="handleLogout" class="logout-btn">Logout</button>
@@ -65,18 +71,29 @@ export default {
 }
 
 .header {
-  background: var(--bg-primary);
+  background: var(--nav-bg);
   padding: var(--spacing-lg) var(--spacing-2xl);
-  box-shadow: var(--shadow-md);
-  border-bottom: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-lg);
+  border-bottom: 1px solid var(--nav-bg-dark);
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.logo {
+  font-size: 2rem;
+  filter: brightness(0) invert(1);
+}
+
 .header h1 {
   margin: 0;
-  color: var(--text-primary);
+  color: var(--text-inverse);
   font-size: var(--text-2xl);
   font-weight: 600;
 }
@@ -88,7 +105,7 @@ export default {
 }
 
 .user-info span {
-  color: var(--text-secondary);
+  color: var(--bg-secondary);
   font-size: var(--text-sm);
   font-weight: 500;
 }
@@ -107,8 +124,8 @@ export default {
 }
 
 .logout-btn:hover {
-  background-color: #DC2626;
-  border-color: #DC2626;
+  background-color: var(--accent-danger-hover);
+  border-color: var(--accent-danger-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }
@@ -130,8 +147,16 @@ export default {
     gap: var(--spacing-md);
   }
   
+  .header-brand {
+    align-self: flex-start;
+  }
+  
   .header h1 {
     font-size: var(--text-xl);
+  }
+  
+  .user-info {
+    align-self: flex-end;
   }
   
   .main-content {

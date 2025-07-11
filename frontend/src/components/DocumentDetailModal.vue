@@ -25,7 +25,6 @@
             @click="deleteDocument" 
             class="btn btn-sm btn-danger delete-btn"
             :disabled="deleting"
-            style="display: block !important; visibility: visible !important; background-color: #dc3545 !important; color: white !important;"
           >
             {{ deleting ? 'Deleting...' : 'Delete Document' }}
           </button>
@@ -301,7 +300,6 @@
                       class="btn btn-sm btn-outline-danger delete-file-btn"
                       title="Delete file"
                       :disabled="deletingFileId === file.file_id"
-                      style="display: inline-block !important; visibility: visible !important; background-color: transparent !important; color: #dc3545 !important; border: 1px solid #dc3545 !important;"
                     >
                       {{ deletingFileId === file.file_id ? '...' : '🗑' }}
                     </button>
@@ -1105,8 +1103,8 @@ export default {
 }
 
 .btn-danger:hover:not(:disabled) {
-  background-color: #DC2626;
-  border-color: #DC2626;
+  background-color: var(--accent-danger-hover);
+  border-color: var(--accent-danger-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-md);
 }

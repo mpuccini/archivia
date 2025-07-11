@@ -600,7 +600,7 @@ export default {
 }
 
 .remove-file-btn:hover {
-  background: #DC2626;
+  background: var(--accent-danger-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow-sm);
 }
