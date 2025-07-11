@@ -142,8 +142,8 @@ export default {
     const downloadFile = async (file) => {
       isDownloading[file.id] = true
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/files/${file.id}/download`,
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/files/${file.id}/stream`,
           {
             headers: {
               'Authorization': `Bearer ${authStore.token}`
@@ -151,8 +151,17 @@ export default {
           }
         )
         
-        // Open download URL in new tab
-        window.open(response.data.download_url, '_blank')
+        if (!response.ok) throw new Error('Download failed')
+        
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = file.filename
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
       } catch (error) {
         console.error('Error downloading file:', error)
         alert('Failed to download file: ' + (error.response?.data?.detail || error.message))

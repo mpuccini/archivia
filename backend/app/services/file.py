@@ -262,6 +262,37 @@ class FileService:
         download_url = await self.minio_service.get_file_url(db_file.minio_object_name)
         return download_url
     
+    async def stream_file(self, db: Session, file_id: int, user_id: int):
+        """Stream file content directly"""
+        from fastapi.responses import StreamingResponse
+        import io
+        
+        # Get file record
+        db_file = db.query(File).filter(
+            File.id == file_id,
+            File.owner_id == user_id
+        ).first()
+        
+        if not db_file:
+            raise HTTPException(status_code=404, detail="File not found or not accessible")
+        
+        # Get file content from MinIO
+        try:
+            file_data = self.minio_service.get_file(db_file.minio_object_name)
+            
+            # Create streaming response
+            return StreamingResponse(
+                io.BytesIO(file_data.read()),
+                media_type=db_file.content_type or 'application/octet-stream',
+                headers={
+                    "Content-Disposition": f"inline; filename={db_file.filename}",
+                    "Content-Length": str(db_file.file_size)
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error streaming file {file_id}: {e}")
+            raise HTTPException(status_code=500, detail="Error accessing file")
+    
     def get_user_files(self, db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[File]:
         """Get files for a user"""
         return db.query(File).filter(

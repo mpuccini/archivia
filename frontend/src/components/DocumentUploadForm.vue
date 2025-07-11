@@ -37,14 +37,14 @@
           <h4>Basic Information</h4>
           <div class="form-row">
             <div class="form-group">
-              <label for="logical_id">Logical ID *</label>
+              <label for="logical_id">Logical ID</label>
               <input 
                 type="text" 
                 id="logical_id"
                 v-model="formData.logical_id"
-                required
-                placeholder="e.g., ASMO_T-CONCORDI-POSS-281822"
+                placeholder="Auto-compilato dal nome file (opzionale)"
               />
+              <small class="field-help">Se lasciato vuoto, verrà utilizzato automaticamente il nome del file caricato</small>
             </div>
             <div class="form-group">
               <label for="title">Title</label>
@@ -262,7 +262,7 @@
 </template>
 
 <script>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import axios from 'axios'
 
@@ -276,6 +276,7 @@ export default {
     const uploadProgress = ref(0)
     const uploadStatus = ref('')
     const error = ref('')
+    const logicalIdAutoFilled = ref(false) // Track if logical_id was auto-filled
 
     const formData = reactive({
       logical_id: '',
@@ -302,6 +303,14 @@ export default {
       if (file) {
         selectedFile.value = file
         error.value = ''
+        
+        // Auto-populate logical_id if it's empty
+        if (!formData.logical_id) {
+          // Remove file extension from the filename
+          const fileNameWithoutExtension = file.name.replace(/\.[^/.]+$/, "")
+          formData.logical_id = fileNameWithoutExtension
+          logicalIdAutoFilled.value = true
+        }
       }
     }
 
@@ -309,6 +318,12 @@ export default {
       selectedFile.value = null
       const fileInput = document.querySelector('.file-input')
       if (fileInput) fileInput.value = ''
+      
+      // Clear logical_id if it was auto-filled
+      if (logicalIdAutoFilled.value) {
+        formData.logical_id = ''
+        logicalIdAutoFilled.value = false
+      }
     }
 
     const formatFileSize = (bytes) => {
@@ -374,6 +389,14 @@ export default {
       }
     }
 
+    // Watch for manual changes to logical_id
+    watch(() => formData.logical_id, (newValue, oldValue) => {
+      // If user manually modifies the field, mark it as not auto-filled
+      if (logicalIdAutoFilled.value && oldValue && newValue !== oldValue) {
+        logicalIdAutoFilled.value = false
+      }
+    })
+
     return {
       selectedFile,
       formData,
@@ -432,6 +455,13 @@ export default {
   font-weight: 500;
   color: #495057;
   font-size: 14px;
+}
+
+.field-help {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6c757d;
+  font-style: italic;
 }
 
 .form-group input,

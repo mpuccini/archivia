@@ -18,6 +18,7 @@ from app.models.user import User
 from app.schemas.document import DocumentCreate, DocumentUpdate, DocumentListItem, DocumentDetail, DocumentUpload
 from app.services.file import FileService
 from app.services.minio import MinIOService
+from app.utils.mets_generator import METSGenerator
 
 
 class DocumentService:
@@ -59,6 +60,12 @@ class DocumentService:
         user_id: int
     ) -> Document:
         """Create a new document with associated file"""
+        # Auto-generate logical_id from filename if not provided
+        if not document_data.logical_id or document_data.logical_id.strip() == "":
+            # Use filename without extension as logical_id
+            filename_without_ext = os.path.splitext(file.filename)[0]
+            document_data.logical_id = filename_without_ext
+        
         # First create the document
         doc_create = DocumentCreate(**document_data.dict())
         document = self.create_document(doc_create, user_id)
@@ -161,7 +168,7 @@ class DocumentService:
             for row in results
         ]
     
-    async def get_document(self, document_id: int, user_id: int) -> Optional[DocumentDetail]:
+    def get_document(self, document_id: int, user_id: int) -> Optional[DocumentDetail]:
         """Get a specific document with files"""
         document = self.db.query(Document).options(
             joinedload(Document.document_files).joinedload(DocumentFile.file)
@@ -296,8 +303,10 @@ class DocumentService:
         )
     
     def export_mets_xml(self, document_id: int, user_id: int) -> StreamingResponse:
-        """Export METS XML for a single document"""
-        document = self.db.query(Document).filter(
+        """Export dynamically generated METS XML for a single document"""
+        document = self.db.query(Document).options(
+            joinedload(Document.document_files).joinedload(DocumentFile.file)
+        ).filter(
             Document.id == document_id,
             Document.owner_id == user_id
         ).first()
@@ -305,13 +314,51 @@ class DocumentService:
         if not document:
             raise HTTPException(status_code=404, detail="Document not found")
         
-        if not document.mets_xml:
-            raise HTTPException(status_code=404, detail="METS XML not available for this document")
+        # Generate METS XML dynamically from database data
+        mets_generator = METSGenerator()
+        mets_xml = mets_generator.generate_mets_xml(document)
         
         return StreamingResponse(
-            io.BytesIO(document.mets_xml.encode()),
+            io.BytesIO(mets_xml.encode('utf-8')),
             media_type="application/xml",
             headers={"Content-Disposition": f"attachment; filename={document.logical_id}_mets.xml"}
+        )
+    
+    def export_multiple_mets_xml(self, document_ids: List[int], user_id: int) -> StreamingResponse:
+        """Export dynamically generated METS XML for multiple documents as ZIP archive"""
+        documents = self.db.query(Document).options(
+            joinedload(Document.document_files).joinedload(DocumentFile.file)
+        ).filter(
+            Document.id.in_(document_ids),
+            Document.owner_id == user_id
+        ).all()
+        
+        if not documents:
+            raise HTTPException(status_code=404, detail="No documents found")
+        
+        # Generate METS XML for all documents
+        mets_generator = METSGenerator()
+        
+        # Create ZIP file in memory
+        zip_buffer = io.BytesIO()
+        
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            for document in documents:
+                try:
+                    mets_xml = mets_generator.generate_mets_xml(document)
+                    filename = f"{document.logical_id}_mets.xml"
+                    zip_file.writestr(filename, mets_xml.encode('utf-8'))
+                except Exception as e:
+                    # Log error but continue with other documents
+                    print(f"Error generating METS for document {document.id}: {e}")
+                    continue
+        
+        zip_buffer.seek(0)
+        
+        return StreamingResponse(
+            io.BytesIO(zip_buffer.read()),
+            media_type="application/zip",
+            headers={"Content-Disposition": "attachment; filename=documents_mets.zip"}
         )
     
     def download_document_files(self, document_id: int, user_id: int) -> StreamingResponse:
@@ -381,9 +428,59 @@ class DocumentService:
             
             zip_file.writestr('metadata.csv', metadata_csv.getvalue())
             
-            # Add METS XML if available
-            if document.mets_xml:
-                zip_file.writestr('mets.xml', document.mets_xml)
+            # Generate and add METS XML
+            try:
+                mets_generator = METSGenerator()
+                # Convert database document to DocumentDetail format for METS generator
+                document_files = []
+                for doc_file in document.document_files:
+                    file_data = {
+                        'id': doc_file.id,
+                        'file_id': doc_file.file_id,
+                        'file_use': doc_file.file_use,
+                        'file_label': doc_file.file_label,
+                        'sequence_number': doc_file.sequence_number,
+                        'checksum_md5': doc_file.checksum_md5,
+                        'image_width': doc_file.image_width,
+                        'image_height': doc_file.image_height,
+                        'bits_per_sample': doc_file.bits_per_sample,
+                        'samples_per_pixel': doc_file.samples_per_pixel,
+                        'date_time_created': doc_file.date_time_created,
+                        'filename': doc_file.file.filename,
+                        'file_size': doc_file.file.file_size,
+                        'content_type': doc_file.file.content_type
+                    }
+                    document_files.append(file_data)
+
+                document_detail = DocumentDetail(
+                    id=document.id,
+                    logical_id=document.logical_id,
+                    conservative_id=document.conservative_id,
+                    conservative_id_authority=document.conservative_id_authority,
+                    title=document.title,
+                    description=document.description,
+                    archive_name=document.archive_name,
+                    archive_contact=document.archive_contact,
+                    license_url=document.license_url,
+                    rights_statement=document.rights_statement,
+                    image_producer=document.image_producer,
+                    scanner_manufacturer=document.scanner_manufacturer,
+                    scanner_model=document.scanner_model,
+                    document_type=document.document_type,
+                    total_pages=document.total_pages,
+                    mets_xml=document.mets_xml,
+                    owner_id=document.owner_id,
+                    created_at=document.created_at,
+                    updated_at=document.updated_at,
+                    document_files=document_files
+                )
+                
+                mets_xml = mets_generator.generate_mets_xml(document_detail)
+                zip_file.writestr('mets.xml', mets_xml)
+            except Exception as e:
+                print(f"Error generating METS XML: {e}")
+                import traceback
+                traceback.print_exc()
             
             # Add files
             for doc_file in document.document_files:
@@ -436,9 +533,59 @@ class DocumentService:
                     
                     doc_zip.writestr('metadata.csv', metadata_csv.getvalue())
                     
-                    # Add METS XML if available
-                    if document.mets_xml:
-                        doc_zip.writestr('mets.xml', document.mets_xml)
+                    # Generate and add METS XML
+                    try:
+                        mets_generator = METSGenerator()
+                        # Convert database document to DocumentDetail format for METS generator
+                        document_files = []
+                        for doc_file in document.document_files:
+                            file_data = {
+                                'id': doc_file.id,
+                                'file_id': doc_file.file_id,
+                                'file_use': doc_file.file_use,
+                                'file_label': doc_file.file_label,
+                                'sequence_number': doc_file.sequence_number,
+                                'checksum_md5': doc_file.checksum_md5,
+                                'image_width': doc_file.image_width,
+                                'image_height': doc_file.image_height,
+                                'bits_per_sample': doc_file.bits_per_sample,
+                                'samples_per_pixel': doc_file.samples_per_pixel,
+                                'date_time_created': doc_file.date_time_created,
+                                'filename': doc_file.file.filename,
+                                'file_size': doc_file.file.file_size,
+                                'content_type': doc_file.file.content_type
+                            }
+                            document_files.append(file_data)
+
+                        document_detail = DocumentDetail(
+                            id=document.id,
+                            logical_id=document.logical_id,
+                            conservative_id=document.conservative_id,
+                            conservative_id_authority=document.conservative_id_authority,
+                            title=document.title,
+                            description=document.description,
+                            archive_name=document.archive_name,
+                            archive_contact=document.archive_contact,
+                            license_url=document.license_url,
+                            rights_statement=document.rights_statement,
+                            image_producer=document.image_producer,
+                            scanner_manufacturer=document.scanner_manufacturer,
+                            scanner_model=document.scanner_model,
+                            document_type=document.document_type,
+                            total_pages=document.total_pages,
+                            mets_xml=document.mets_xml,
+                            owner_id=document.owner_id,
+                            created_at=document.created_at,
+                            updated_at=document.updated_at,
+                            document_files=document_files
+                        )
+                        
+                        mets_xml = mets_generator.generate_mets_xml(document_detail)
+                        doc_zip.writestr('mets.xml', mets_xml)
+                    except Exception as e:
+                        print(f"Error generating METS XML: {e}")
+                        import traceback
+                        traceback.print_exc()
                     
                     # Add files
                     for doc_file in document.document_files:

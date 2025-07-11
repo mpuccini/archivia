@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File as FastAPIFile, Form
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -125,6 +125,22 @@ async def download_file(
     except Exception as e:
         logger.error(f"Error generating download URL: {e}")
         raise HTTPException(status_code=500, detail="Error generating download URL")
+
+
+@router.get("/{file_id}/stream")
+async def stream_file(
+    file_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Stream file content directly"""
+    try:
+        return await file_service.stream_file(db, file_id, current_user.id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error streaming file: {e}")
+        raise HTTPException(status_code=500, detail="Error streaming file")
 
 
 @router.get("/{file_id}", response_model=FileResponse)

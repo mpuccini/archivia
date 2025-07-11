@@ -75,7 +75,7 @@ async def upload_document(
     document = await service.create_document_with_file(file, document_data, current_user.id)
     
     # Return detailed document
-    return await service.get_document(document.id, current_user.id)
+    return service.get_document(document.id, current_user.id)
 
 
 @router.get("/", response_model=List[DocumentListItem])
@@ -91,7 +91,7 @@ async def get_documents(
 
 
 @router.get("/{document_id}", response_model=DocumentDetail)
-async def get_document(
+def get_document(
     document_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -148,6 +148,17 @@ async def export_metadata_csv(
     """Export metadata for multiple documents as CSV"""
     service = DocumentService(db)
     return service.export_metadata_csv(document_ids, current_user.id)
+
+
+@router.post("/export/mets")
+async def export_multiple_mets_xml(
+    document_ids: List[int],
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Export METS XML for multiple documents as ZIP archive"""
+    service = DocumentService(db)
+    return service.export_multiple_mets_xml(document_ids, current_user.id)
 
 
 @router.get("/{document_id}/export/mets")

@@ -99,7 +99,7 @@ class DocumentDetail(DocumentBase):
 class DocumentUpload(BaseModel):
     """Schema for document upload with metadata"""
     # Basic required fields
-    logical_id: str = Field(..., description="Logical identifier for the document")
+    logical_id: Optional[str] = Field(None, description="Logical identifier for the document (auto-filled from filename if not provided)")
     title: Optional[str] = None
     description: Optional[str] = None
     

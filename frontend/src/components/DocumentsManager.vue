@@ -27,6 +27,7 @@
       v-if="selectedDocument" 
       :document="selectedDocument" 
       @close="selectedDocument = null" 
+      @documentUpdated="handleDocumentUpdated"
     />
 
     <!-- Documents Table -->
@@ -39,6 +40,9 @@
           <div class="batch-actions" v-if="selectedDocuments.length > 0">
             <button @click="exportSelectedCSV" class="btn btn-outline">
               <i class="icon-csv"></i> Export CSV
+            </button>
+            <button @click="exportSelectedMETSXML" class="btn btn-outline">
+              <i class="icon-xml"></i> Export METS XML
             </button>
             <button @click="downloadSelectedArchives" class="btn btn-outline">
               <i class="icon-download"></i> Download Archives
@@ -56,7 +60,8 @@
         <button @click="loadDocuments" class="btn btn-primary">Retry</button>
       </div>
 
-      <table v-else class="documents-table">
+      <div v-else class="table-wrapper">
+        <table class="documents-table">
         <thead>
           <tr>
             <th class="checkbox-column">
@@ -101,7 +106,7 @@
                   <button class="btn btn-sm btn-secondary dropdown-toggle" @click="toggleDropdown(document.id)">
                     <i class="icon-download"></i>
                   </button>
-                  <div class="dropdown-menu" v-if="openDropdown === document.id">
+                  <div class="dropdown-menu" v-if="openDropdown === document.id" :data-dropdown="document.id">
                     <a href="#" @click.prevent="exportMetadataCSV(document.id)" class="dropdown-item">
                       <i class="icon-csv"></i> Export CSV
                     </a>
@@ -120,7 +125,8 @@
             </td>
           </tr>
         </tbody>
-      </table>
+        </table>
+      </div>
 
       <div v-if="!loading && documents.length === 0" class="empty-state">
         <p>No documents found.</p>
@@ -154,7 +160,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import DocumentUploadForm from './DocumentUploadForm.vue'
 import DocumentDetailModal from './DocumentDetailModal.vue'
@@ -218,6 +224,31 @@ export default {
 
     const toggleDropdown = (documentId) => {
       openDropdown.value = openDropdown.value === documentId ? null : documentId
+      
+      // Close dropdown if clicking outside after next tick
+      if (openDropdown.value) {
+        nextTick(() => {
+          // Check if dropdown would go outside viewport and adjust position
+          const dropdownElement = document.querySelector(`[data-dropdown="${documentId}"]`)
+          if (dropdownElement) {
+            const rect = dropdownElement.getBoundingClientRect()
+            const viewportWidth = window.innerWidth
+            const viewportHeight = window.innerHeight
+            
+            // Adjust horizontal position if needed
+            if (rect.right > viewportWidth - 20) {
+              dropdownElement.style.right = '0'
+              dropdownElement.style.left = 'auto'
+            }
+            
+            // Adjust vertical position if needed
+            if (rect.bottom > viewportHeight - 20) {
+              dropdownElement.style.top = 'auto'
+              dropdownElement.style.bottom = '100%'
+            }
+          }
+        })
+      }
     }
 
     const closeUploadForm = () => {
@@ -234,25 +265,53 @@ export default {
     }
 
     const openDocumentDetail = async (document) => {
+      console.log('DocumentsManager: Opening document detail for:', document)
       await loadDocumentDetails(document.id)
     }
 
     const loadDocumentDetails = async (documentId) => {
+      console.log('DocumentsManager: Loading document details for ID:', documentId)
       try {
         loading.value = true
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/documents/${documentId}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${authStore.token}`
-            }
+        const url = `${import.meta.env.VITE_API_URL}/api/documents/${documentId}`
+        console.log('DocumentsManager: Fetching from URL:', url)
+        const response = await axios.get(url, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
           }
-        )
+        })
+        console.log('DocumentsManager: Got response:', response.data)
         selectedDocument.value = response.data
+        console.log('DocumentsManager: selectedDocument set to:', selectedDocument.value)
       } catch (err) {
-        console.error('Error loading document details:', err)
+        console.error('DocumentsManager: Error loading document details:', err)
+        alert('Failed to load document details: ' + (err.response?.data?.detail || err.message))
       } finally {
         loading.value = false
+      }
+    }
+
+    const handleDocumentUpdated = (updatedDocument) => {
+      console.log('Document updated:', updatedDocument)
+      
+      // Update the document in the list
+      const index = documents.value.findIndex(doc => doc.id === updatedDocument.id)
+      if (index !== -1) {
+        // Update only specific fields that might have changed in the list view
+        documents.value[index] = {
+          ...documents.value[index],
+          logical_id: updatedDocument.logical_id,
+          title: updatedDocument.title,
+          archive_name: updatedDocument.archive_name,
+          document_type: updatedDocument.document_type,
+          total_pages: updatedDocument.total_pages,
+          updated_at: updatedDocument.updated_at
+        }
+      }
+      
+      // Update the selected document if it's the same one
+      if (selectedDocument.value && selectedDocument.value.id === updatedDocument.id) {
+        selectedDocument.value = updatedDocument
       }
     }
 
@@ -305,6 +364,11 @@ export default {
         window.URL.revokeObjectURL(url)
       } catch (err) {
         console.error('Export METS XML error:', err)
+        if (err.response && err.response.status === 404) {
+          alert('METS XML not available for this document. The document may not have been processed with METS metadata.')
+        } else {
+          alert('Error exporting METS XML. Please try again.')
+        }
       }
       openDropdown.value = null
     }
@@ -387,6 +451,42 @@ export default {
       }
     }
 
+    const exportSelectedMETSXML = async () => {
+      if (selectedDocuments.value.length === 0) {
+        alert('Please select at least one document to export')
+        return
+      }
+
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/documents/export/mets`,
+          selectedDocuments.value,
+          {
+            headers: {
+              'Authorization': `Bearer ${authStore.token}`
+            },
+            responseType: 'blob'
+          }
+        )
+        
+        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `documents_mets.zip`)
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        window.URL.revokeObjectURL(url)
+      } catch (err) {
+        console.error('Export selected METS XML error:', err)
+        if (err.response && err.response.status === 404) {
+          alert('No METS XML available for the selected documents')
+        } else {
+          alert('Error exporting METS XML. Please try again.')
+        }
+      }
+    }
+
     const downloadSelectedArchives = async () => {
       try {
         const response = await axios.post(
@@ -459,11 +559,13 @@ export default {
       viewDocument,
       openDocumentDetail,
       loadDocumentDetails,
+      handleDocumentUpdated,
       exportMetadataCSV,
       exportMETSXML,
       downloadFiles,
       downloadArchive,
       exportSelectedCSV,
+      exportSelectedMETSXML,
       downloadSelectedArchives,
       formatDate,
       goToPage
@@ -606,8 +708,18 @@ export default {
 .table-container {
   background: white;
   border-radius: 8px;
-  overflow: hidden;
+  /* Remove overflow hidden to allow dropdowns to show */
+  overflow: visible;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  /* Ensure container has proper stacking context */
+  position: relative;
+  z-index: 1;
+}
+
+.table-wrapper {
+  /* Handle horizontal scroll for the table content only */
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .table-header {
@@ -667,6 +779,7 @@ export default {
 
 .actions {
   width: 120px;
+  position: relative;
 }
 
 .action-buttons {
@@ -687,6 +800,10 @@ export default {
   cursor: pointer;
 }
 
+.dropdown {
+  position: relative;
+}
+
 .dropdown-menu {
   position: absolute;
   top: 100%;
@@ -695,8 +812,24 @@ export default {
   border: 1px solid #dee2e6;
   border-radius: 4px;
   min-width: 160px;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  /* Ensure dropdown shows above table constraints */
+  max-height: none;
+  overflow: visible;
+  /* Add subtle animation */
+  animation: fadeInDropdown 0.2s ease-out;
+}
+
+@keyframes fadeInDropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .dropdown-item {
