@@ -1,0 +1,83 @@
+services:
+  db:
+    image: postgres:15
+    container_name: archivia-db
+    environment:
+      POSTGRES_DB: archivia
+      POSTGRES_USER: archivia
+      POSTGRES_PASSWORD: archivia123
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - archivia-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U archivia -d archivia"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: archivia-backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://archivia:archivia123@db:5432/archivia
+      SECRET_KEY: your-secret-key-here
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: archivia
+      MINIO_SECRET_KEY: archivia123
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - archivia-net
+    volumes:
+      - ./backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000
+    container_name: archivia-frontend
+    ports:
+      - "3000:80"
+    networks:
+      - archivia-net
+
+  minio:
+    image: minio/minio:latest
+    container_name: archivia-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    environment:
+      MINIO_ACCESS_KEY: archivia
+      MINIO_SECRET_KEY: archivia123
+    command: server /data --console-address ":9001"
+    networks:
+      - archivia-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+volumes:
+  pgdata:
+  minio_data:
+
+networks:
+  archivia-net:
+    driver: bridge
