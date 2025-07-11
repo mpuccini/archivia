@@ -322,6 +322,9 @@
                     :src="imageDataUrl" 
                     :alt="selectedFile.filename"
                     v-show="imageLoaded && !imageError"
+                    @click="openImageViewer"
+                    class="preview-image clickable"
+                    title="Click to view full size"
                   />
                   <div v-if="!imageLoaded && !imageError" class="loading-preview">
                     Loading preview...
@@ -362,6 +365,18 @@
         <button @click="$emit('close')" class="btn btn-secondary">Close</button>
       </div>
     </div>
+    
+    <!-- Image Viewer -->
+    <ImageViewer
+      v-if="selectedFile && isImageFile(selectedFile)"
+      :visible="showImageViewer"
+      :imageUrl="imageDataUrl"
+      :filename="selectedFile.filename"
+      :imageWidth="selectedFile.image_width"
+      :imageHeight="selectedFile.image_height"
+      :fileSize="selectedFile.file_size"
+      @close="closeImageViewer"
+    />
   </div>
 </template>
 
@@ -369,9 +384,13 @@
 import { ref, reactive, watch, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import axios from 'axios'
+import ImageViewer from './ImageViewer.vue'
 
 export default {
   name: 'DocumentDetailModal',
+  components: {
+    ImageViewer
+  },
   props: {
     document: {
       type: Object,
@@ -387,6 +406,9 @@ export default {
     const imageLoaded = ref(false)
     const imageError = ref(false)
     const imageDataUrl = ref('')
+    
+    // Image viewer state
+    const showImageViewer = ref(false)
     
     // Edit state
     const isEditing = ref(false)
@@ -569,6 +591,16 @@ export default {
       }
     }
 
+    const openImageViewer = () => {
+      if (selectedFile.value && isImageFile(selectedFile.value) && imageLoaded.value) {
+        showImageViewer.value = true
+      }
+    }
+
+    const closeImageViewer = () => {
+      showImageViewer.value = false
+    }
+
     // Edit functions
     const startEdit = () => {
       console.log('startEdit called, setting isEditing to true')
@@ -699,6 +731,7 @@ export default {
       imageLoaded,
       imageError,
       imageDataUrl,
+      showImageViewer,
       isEditing,
       saving,
       deleting,
@@ -711,6 +744,8 @@ export default {
       isImageFile,
       downloadFile,
       downloadArchive,
+      openImageViewer,
+      closeImageViewer,
       startEdit,
       cancelEdit,
       saveChanges,
@@ -915,6 +950,16 @@ export default {
   max-height: 300px;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.preview-image.clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.preview-image.clickable:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .loading-preview, .error-preview {
