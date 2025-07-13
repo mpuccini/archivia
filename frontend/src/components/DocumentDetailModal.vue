@@ -234,7 +234,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                               </svg>
                             </button>
-                          </div>
+                            </div>
                         </div>
                       </div>
                     </div>
@@ -447,13 +447,28 @@ export default {
     const imageLoaded = ref(false)
     const imageError = ref(false)
     const showImageViewer = ref(false)
+    const selectedImageFile = ref(null)
+    const imageUploading = ref(false)
+    const imageUploadProgress = ref(0)
+    const isImageDragOver = ref(false)
+    const imageInput = ref(null)
     
     // Edit form
     const editForm = reactive({
       title: '',
       description: '',
       document_type: '',
-      total_pages: null
+      total_pages: null,
+      conservative_id: '',
+      archive_name: '',
+      archive_contact: '',
+      fund_name: '',
+      series_name: '',
+      folder_number: '',
+      conservative_id_authority: '',
+      period: '',
+      date_from: '',
+      date_to: ''
     })
 
     // Computed
@@ -614,6 +629,16 @@ export default {
       editForm.description = props.document.description || ''
       editForm.document_type = props.document.document_type || ''
       editForm.total_pages = props.document.total_pages || null
+      editForm.conservative_id = props.document.conservative_id || ''
+      editForm.archive_name = props.document.archive_name || ''
+      editForm.archive_contact = props.document.archive_contact || ''
+      editForm.fund_name = props.document.fund_name || ''
+      editForm.series_name = props.document.series_name || ''
+      editForm.folder_number = props.document.folder_number || ''
+      editForm.conservative_id_authority = props.document.conservative_id_authority || ''
+      editForm.period = props.document.period || ''
+      editForm.date_from = props.document.date_from || ''
+      editForm.date_to = props.document.date_to || ''
       isEditing.value = true
     }
 
@@ -678,6 +703,91 @@ export default {
       }
     }
 
+    // Image upload methods
+    const triggerImageInput = () => {
+      imageInput.value?.click()
+    }
+
+    const handleImageSelect = (event) => {
+      const file = event.target.files[0]
+      if (file) {
+        validateAndSetImage(file)
+      }
+    }
+
+    const handleImageDrop = (event) => {
+      event.preventDefault()
+      isImageDragOver.value = false
+      const file = event.dataTransfer.files[0]
+      if (file) {
+        validateAndSetImage(file)
+      }
+    }
+
+    const validateAndSetImage = (file) => {
+      // Check file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/tiff']
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please select a valid image file (JPEG, PNG, or TIFF)')
+        return
+      }
+
+      // Check file size (20MB limit)
+      if (file.size > 20 * 1024 * 1024) {
+        alert('Image file must be smaller than 20MB')
+        return
+      }
+
+      selectedImageFile.value = file
+    }
+
+    const clearSelectedImage = () => {
+      selectedImageFile.value = null
+      if (imageInput.value) {
+        imageInput.value.value = ''
+      }
+    }
+
+    const uploadImage = async () => {
+      if (!selectedImageFile.value) return
+
+      imageUploading.value = true
+      imageUploadProgress.value = 0
+
+      try {
+        const formData = new FormData()
+        formData.append('file', selectedImageFile.value)
+        formData.append('logical_id', props.document.logical_id)
+
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/files/upload-image`,
+          formData,
+          {
+            headers: {
+              'Authorization': `Bearer ${authStore.token}`,
+              'Content-Type': 'multipart/form-data'
+            },
+            onUploadProgress: (progressEvent) => {
+              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              imageUploadProgress.value = progress
+            }
+          }
+        )
+
+        // Clear the selection and refresh the document
+        clearSelectedImage()
+        emit('documentUpdated', response.data.document)
+        alert('Image uploaded successfully!')
+
+      } catch (err) {
+        console.error('Error uploading image:', err)
+        alert('Failed to upload image: ' + (err.response?.data?.detail || err.message))
+      } finally {
+        imageUploading.value = false
+        imageUploadProgress.value = 0
+      }
+    }
+
     // Watchers
     watch(() => props.document, (newDoc) => {
       if (newDoc && newDoc.document_files && newDoc.document_files.length > 0) {
@@ -708,6 +818,11 @@ export default {
       imageLoaded,
       imageError,
       showImageViewer,
+      selectedImageFile,
+      imageUploading,
+      imageUploadProgress,
+      isImageDragOver,
+      imageInput,
       editForm,
       
       // Computed
@@ -726,7 +841,12 @@ export default {
       startEdit,
       cancelEdit,
       saveChanges,
-      deleteDocument
+      deleteDocument,
+      triggerImageInput,
+      handleImageSelect,
+      handleImageDrop,
+      clearSelectedImage,
+      uploadImage
     }
   }
 }

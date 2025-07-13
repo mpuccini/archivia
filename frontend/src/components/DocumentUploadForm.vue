@@ -166,157 +166,77 @@
           </div>
         </div>
 
-        <!-- Document Upload Section -->
-        <div class="space-y-6">
-          <div>
-            <h4 class="text-md font-medium text-gray-900 mb-4">Document Files</h4>
-            <div 
-              @drop="handleDocumentDrop"
-              @dragover.prevent
-              @dragenter.prevent="isDocumentDragOver = true"
-              @dragleave.prevent="isDocumentDragOver = false"
-              @click="triggerDocumentInput"
-              :class="[
-                'relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors',
-                isDocumentDragOver 
-                  ? 'border-blue-400 bg-blue-50' 
-                  : selectedFiles.length 
-                  ? 'border-green-400 bg-green-50' 
-                  : 'border-gray-300 hover:border-gray-400'
-              ]"
-            >
-              <input
-                ref="fileInput"
-                type="file"
-                @change="handleDocumentSelect"
-                accept="image/*,.pdf"
-                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                multiple
-              />
+        <!-- File Drop Zone -->
+        <div 
+          @drop="handleDrop"
+          @dragover.prevent
+          @dragenter.prevent="isDragOver = true"
+          @dragleave.prevent="isDragOver = false"
+          @click="triggerFileInput"
+          :class="[
+            'relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
+            isDragOver 
+              ? 'border-blue-400 bg-blue-50' 
+              : selectedFiles.length 
+              ? 'border-green-400 bg-green-50' 
+              : 'border-gray-300 hover:border-gray-400'
+          ]"
+        >
+          <input
+            ref="fileInput"
+            type="file"
+            @change="handleFileSelect"
+            accept="image/*,.pdf"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            multiple
+          />
 
-              <div v-if="!selectedFiles.length">
-                <svg class="mx-auto h-10 w-10 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                  <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <p class="mt-2 text-sm text-gray-600">
-                  <span class="font-medium text-blue-600">Click to upload</span> or drag and drop document files
-                </p>
-                <p class="text-xs text-gray-500">PNG, JPG, TIFF, PDF up to 50MB each</p>
-              </div>
-
-              <div v-else class="space-y-3">
-                <svg class="mx-auto h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <div>
-                  <p class="text-sm font-medium text-gray-900">{{ selectedFiles.length }} document file(s) selected</p>
-                  <div class="mt-2 space-y-2">
-                    <div v-for="(file, index) in selectedFiles" :key="file.name" class="flex items-center justify-between bg-white rounded p-2 text-xs">
-                      <div class="flex items-center space-x-2">
-                        <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <div>
-                          <p class="font-medium text-gray-900">{{ file.name }}</p>
-                          <p class="text-gray-500">{{ formatFileSize(file.size) }}</p>
-                        </div>
-                      </div>
-                      <button
-                        @click.stop="removeFile(index)"
-                        class="text-red-500 hover:text-red-700"
-                      >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  @click.stop="clearFiles"
-                  class="text-xs text-gray-500 hover:text-gray-700"
-                >
-                  Clear all files
-                </button>
-              </div>
-            </div>
+          <div v-if="!selectedFiles.length">
+            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <p class="mt-4 text-lg text-gray-600">
+              <span class="font-medium text-blue-600">Click to upload</span> or drag and drop
+            </p>
+            <p class="text-sm text-gray-500">PNG, JPG, TIFF, PDF up to 50MB each</p>
           </div>
 
-          <!-- Optional Images Section -->
-          <div>
-            <h4 class="text-md font-medium text-gray-900 mb-2">Additional Images (Optional)</h4>
-            <p class="text-sm text-gray-500 mb-4">Upload additional images related to this document (photos, scans, etc.)</p>
-            
-            <div 
-              @drop="handleImageDrop"
-              @dragover.prevent
-              @dragenter.prevent="isImageDragOver = true"
-              @dragleave.prevent="isImageDragOver = false"
-              @click="triggerImageInput"
-              :class="[
-                'relative border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors',
-                isImageDragOver 
-                  ? 'border-purple-400 bg-purple-50' 
-                  : selectedImages.length 
-                  ? 'border-purple-400 bg-purple-50' 
-                  : 'border-gray-300 hover:border-gray-400'
-              ]"
-            >
-              <input
-                ref="imageInput"
-                type="file"
-                @change="handleImageSelect"
-                accept="image/*"
-                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                multiple
-              />
-
-              <div v-if="!selectedImages.length">
-                <svg class="mx-auto h-8 w-8 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
-                </svg>
-                <p class="mt-2 text-sm text-gray-600">
-                  <span class="font-medium text-purple-600">Click to upload</span> or drag images here
-                </p>
-                <p class="text-xs text-gray-500">JPG, PNG, TIFF up to 20MB each</p>
-              </div>
-
-              <div v-else class="space-y-2">
-                <svg class="mx-auto h-6 w-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p class="text-sm font-medium text-gray-900">{{ selectedImages.length }} image(s) selected</p>
-                <div class="grid grid-cols-2 gap-2 mt-2">
-                  <div v-for="(image, index) in selectedImages" :key="image.name" class="relative bg-white rounded border p-2">
-                    <div class="flex items-center space-x-2">
-                      <div class="w-8 h-8 bg-purple-100 rounded flex items-center justify-center">
-                        <svg class="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <p class="text-xs font-medium text-gray-900 truncate">{{ image.name }}</p>
-                        <p class="text-xs text-gray-500">{{ formatFileSize(image.size) }}</p>
-                      </div>
-                      <button
-                        @click.stop="removeImage(index)"
-                        class="text-red-500 hover:text-red-700"
-                      >
-                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
+          <div v-else class="space-y-4">
+            <svg class="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p class="text-lg font-medium text-gray-900">{{ selectedFiles.length }} file(s) selected</p>
+              <div class="mt-2 space-y-2">
+                <div v-for="(file, index) in selectedFiles" :key="file.name" class="flex items-center justify-between bg-white rounded-lg border p-3">
+                  <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0">
+                      <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="text-sm font-medium text-gray-900">{{ file.name }}</p>
+                      <p class="text-sm text-gray-500">{{ formatFileSize(file.size) }}</p>
                     </div>
                   </div>
+                  <button
+                    @click.stop="removeFile(index)"
+                    class="text-red-500 hover:text-red-700"
+                  >
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-                <button
-                  @click.stop="clearImages"
-                  class="text-xs text-purple-600 hover:text-purple-700"
-                >
-                  Clear all images
-                </button>
               </div>
             </div>
+            <button
+              @click.stop="clearFiles"
+              class="text-sm text-gray-500 hover:text-gray-700"
+            >
+              Clear all files
+            </button>
           </div>
         </div>
 
@@ -757,16 +677,12 @@ export default {
     // State
     const currentStep = ref(0)
     const selectedFiles = ref([])
-    const selectedImages = ref([])
     const isDragOver = ref(false)
-    const isDocumentDragOver = ref(false)
-    const isImageDragOver = ref(false)
     const uploading = ref(false)
     const uploadProgress = ref(0)
     const uploadStatus = ref('')
     const error = ref('')
     const fileInput = ref(null)
-    const imageInput = ref(null)
     
     // Metadata import state
     const selectedMetadataFile = ref(null)
@@ -837,24 +753,24 @@ export default {
     })
 
     // Methods
-    // Document file handlers
-    const triggerDocumentInput = () => {
+    // File handlers
+    const triggerFileInput = () => {
       fileInput.value?.click()
     }
 
-    const handleDocumentSelect = (event) => {
+    const handleFileSelect = (event) => {
       const files = Array.from(event.target.files)
-      addDocumentFiles(files)
+      addFiles(files)
     }
 
-    const handleDocumentDrop = (event) => {
+    const handleDrop = (event) => {
       event.preventDefault()
-      isDocumentDragOver.value = false
+      isDragOver.value = false
       const files = Array.from(event.dataTransfer.files)
-      addDocumentFiles(files)
+      addFiles(files)
     }
 
-    const addDocumentFiles = (files) => {
+    const addFiles = (files) => {
       // Filter for supported file types
       const supportedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/tiff', 'application/pdf']
       const validFiles = files.filter(file => 
@@ -875,45 +791,6 @@ export default {
         formData.logical_id = extractedLogicalId.value
       }
     }
-
-    // Image file handlers
-    const triggerImageInput = () => {
-      imageInput.value?.click()
-    }
-
-    const handleImageSelect = (event) => {
-      const files = Array.from(event.target.files)
-      addImageFiles(files)
-    }
-
-    const handleImageDrop = (event) => {
-      event.preventDefault()
-      isImageDragOver.value = false
-      const files = Array.from(event.dataTransfer.files)
-      addImageFiles(files)
-    }
-
-    const addImageFiles = (files) => {
-      // Filter for supported image types only
-      const supportedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/tiff']
-      const validFiles = files.filter(file => 
-        supportedTypes.includes(file.type) && file.size <= 20 * 1024 * 1024 // 20MB limit for images
-      )
-
-      if (validFiles.length !== files.length) {
-        error.value = 'Some image files were skipped. Only JPEG, PNG, and TIFF files under 20MB are supported.'
-      } else {
-        error.value = ''
-      }
-
-      // Add valid files to selection
-      selectedImages.value.push(...validFiles)
-    }
-
-    // Legacy handlers for compatibility
-    const handleFileSelect = handleDocumentSelect
-    const handleDrop = handleDocumentDrop
-    const triggerFileInput = triggerDocumentInput
 
     const removeFile = (index) => {
       selectedFiles.value.splice(index, 1)
@@ -1384,10 +1261,8 @@ export default {
       error.value = ''
 
       try {
-        const allUploads = []
-        
-        // Upload document files first
-        const documentPromises = selectedFiles.value.map(async (file, index) => {
+        // Upload each file individually with the same metadata
+        const uploadPromises = selectedFiles.value.map(async (file, index) => {
           const formDataToSend = new FormData()
           formDataToSend.append('file', file)
           
@@ -1408,82 +1283,34 @@ export default {
             }
           }
 
-          uploadStatus.value = `Uploading document ${file.name}...`
+          uploadStatus.value = `Uploading ${file.name}...`
           
-          return {
-            type: 'document',
-            promise: axios.post(
-              `${import.meta.env.VITE_API_URL}/api/documents/upload`,
-              formDataToSend,
-              {
-                headers: {
-                  'Authorization': `Bearer ${authStore.token}`,
-                  'Content-Type': 'multipart/form-data'
-                },
-                onUploadProgress: (progressEvent) => {
-                  const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                  const totalFiles = selectedFiles.value.length + selectedImages.value.length
-                  const overallProgress = Math.round(((index * 100) + fileProgress) / totalFiles)
-                  uploadProgress.value = overallProgress
-                  uploadStatus.value = `Uploading document ${file.name}... ${fileProgress}%`
-                }
+          return axios.post(
+            `${import.meta.env.VITE_API_URL}/api/documents/upload`,
+            formDataToSend,
+            {
+              headers: {
+                'Authorization': `Bearer ${authStore.token}`,
+                'Content-Type': 'multipart/form-data'
+              },
+              onUploadProgress: (progressEvent) => {
+                const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                const overallProgress = Math.round(((index * 100) + fileProgress) / selectedFiles.value.length)
+                uploadProgress.value = overallProgress
+                uploadStatus.value = `Uploading ${file.name}... ${fileProgress}%`
               }
-            )
-          }
+            }
+          )
         })
 
-        // Add document uploads to queue
-        allUploads.push(...documentPromises)
-
-        // Upload additional images if any
-        if (selectedImages.value.length > 0) {
-          const imagePromises = selectedImages.value.map(async (image, index) => {
-            uploadStatus.value = `Uploading image ${image.name}...`
-            
-            return {
-              type: 'image',
-              promise: axios.post(
-                `${import.meta.env.VITE_API_URL}/api/files/upload-image`,
-                { 
-                  file: image, 
-                  logical_id: formData.logical_id,
-                  image_type: 'additional' 
-                },
-                {
-                  headers: {
-                    'Authorization': `Bearer ${authStore.token}`,
-                    'Content-Type': 'multipart/form-data'
-                  },
-                  onUploadProgress: (progressEvent) => {
-                    const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                    const totalFiles = selectedFiles.value.length + selectedImages.value.length
-                    const baseIndex = selectedFiles.value.length + index
-                    const overallProgress = Math.round(((baseIndex * 100) + fileProgress) / totalFiles)
-                    uploadProgress.value = overallProgress
-                    uploadStatus.value = `Uploading image ${image.name}... ${fileProgress}%`
-                  }
-                }
-              )
-            }
-          })
-          
-          // Add image uploads to queue
-          allUploads.push(...imagePromises)
-        }
-
-        // Execute all uploads
-        const responses = await Promise.all(allUploads.map(upload => upload.promise))
+        const responses = await Promise.all(uploadPromises)
         
         uploadStatus.value = 'Upload complete!'
         uploadProgress.value = 100
         
         setTimeout(() => {
-          const documentResponses = responses.slice(0, selectedFiles.value.length)
-          const imageResponses = responses.slice(selectedFiles.value.length)
-          
           emit('upload-complete', {
-            documents: documentResponses.map(r => r.data),
-            images: imageResponses.map(r => r.data),
+            documents: responses.map(r => r.data),
             count: responses.length
           })
         }, 1000)
@@ -1508,16 +1335,12 @@ export default {
       // State
       currentStep,
       selectedFiles,
-      selectedImages,
       isDragOver,
-      isDocumentDragOver,
-      isImageDragOver,
       uploading,
       uploadProgress,
       uploadStatus,
       error,
       fileInput,
-      imageInput,
       
       // Metadata import state
       selectedMetadataFile,
@@ -1538,26 +1361,12 @@ export default {
       canProceedToNextStep,
       canSubmit,
       
-      // Document file methods
-      triggerDocumentInput,
-      handleDocumentSelect,
-      handleDocumentDrop,
-      removeFile,
-      clearFiles,
-      
-      // Image file methods
-      triggerImageInput,
-      handleImageSelect,
-      handleImageDrop,
-      removeImage,
-      clearImages,
-      
-      // Legacy methods for compatibility
+      // Methods
       triggerFileInput,
       handleFileSelect,
       handleDrop,
-      
-      // General methods
+      removeFile,
+      clearFiles,
       formatFileSize,
       nextStep,
       previousStep,
