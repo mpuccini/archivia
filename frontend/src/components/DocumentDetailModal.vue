@@ -135,6 +135,87 @@
 
                   <!-- Edit Mode -->
                   <div v-else class="space-y-8">
+                    <!-- Image Upload Section -->
+                    <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                      <h4 class="text-lg font-medium text-gray-900 mb-4">🖼️ Document Image</h4>
+                      
+                      <!-- Current Image Preview -->
+                      <div v-if="imageFiles.length > 0" class="mb-4">
+                        <p class="text-sm text-gray-600 mb-2">Current image:</p>
+                        <div class="relative inline-block">
+                          <div 
+                            v-if="selectedFile && selectedFile.file_id === imageFiles[0].file_id && imageDataUrl && imageLoaded"
+                            class="h-32 w-auto"
+                          >
+                            <img 
+                              :src="imageDataUrl" 
+                              :alt="imageFiles[0].filename"
+                              class="h-32 w-auto object-contain rounded border border-gray-200"
+                            />
+                          </div>
+                          <div 
+                            v-else 
+                            class="h-32 w-32 bg-gray-100 rounded border border-gray-200 flex items-center justify-center"
+                          >
+                            <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                          <div class="mt-1 text-xs text-gray-500">{{ imageFiles[0].filename }}</div>
+                        </div>
+                      </div>
+                      
+                      <!-- Image Upload Drop Zone -->
+                      <div 
+                        @drop="handleImageDrop"
+                        @dragover.prevent
+                        @dragenter.prevent="isImageDragOver = true"
+                        @dragleave.prevent="isImageDragOver = false"
+                        @click="triggerImageInput"
+                        :class="[
+                          'relative border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors',
+                          isImageDragOver 
+                            ? 'border-blue-400 bg-blue-50' 
+                            : 'border-gray-300 hover:border-gray-400'
+                        ]"
+                      >
+                        <input
+                          ref="imageInput"
+                          type="file"
+                          @change="handleImageSelect"
+                          accept="image/*"
+                          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                        
+                        <div class="flex flex-col items-center">
+                          <svg class="h-8 w-8 text-gray-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                          </svg>
+                          <span class="text-sm text-gray-600">
+                            {{ imageFiles.length > 0 ? 'Click to replace image' : 'Click to upload image' }}
+                          </span>
+                          <span class="text-xs text-gray-500 mt-1">PNG, JPG, TIFF up to 50MB</span>
+                        </div>
+                      </div>
+                      
+                      <!-- Upload Progress -->
+                      <div v-if="imageUploading" class="mt-3">
+                        <div class="flex items-center">
+                          <svg class="animate-spin h-4 w-4 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span class="text-sm text-blue-800">Uploading image...</span>
+                        </div>
+                        <div class="w-full bg-blue-200 rounded-full h-1 mt-2">
+                          <div 
+                            class="bg-blue-600 h-1 rounded-full transition-all duration-300" 
+                            :style="{ width: imageUploadProgress + '%' }"
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <!-- Basic Information Section -->
                     <div class="bg-gray-50 p-4 rounded-lg">
                       <h4 class="text-lg font-medium text-gray-900 mb-4">📄 Basic Information</h4>
@@ -827,6 +908,11 @@ export default {
       editForm.language = props.document.language || ''
       editForm.subjects = props.document.subjects || ''
       
+      // Load the first image if available
+      if (imageFiles.value.length > 0) {
+        selectFile(imageFiles.value[0])
+      }
+      
       isEditing.value = true
     }
 
@@ -852,8 +938,14 @@ export default {
           }
         )
         
+        // Update the local document data immediately to reflect changes
+        Object.assign(props.document, response.data)
+        
         emit('documentUpdated', response.data)
         isEditing.value = false
+        
+        // Show success feedback
+        console.log('Document updated successfully')
         
       } catch (err) {
         console.error('Error updating document:', err)
@@ -912,7 +1004,7 @@ export default {
       }
     }
 
-    const validateAndSetImage = (file) => {
+    const validateAndSetImage = async (file) => {
       // Check file type
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/tiff']
       if (!allowedTypes.includes(file.type)) {
@@ -927,6 +1019,9 @@ export default {
       }
 
       selectedImageFile.value = file
+      
+      // Automatically upload the image
+      await uploadImage()
     }
 
     const clearSelectedImage = () => {
@@ -976,6 +1071,11 @@ export default {
       }
     }
 
+    const getImageUrl = (file) => {
+      if (!file || !file.file_id) return ''
+      return `${import.meta.env.VITE_API_URL}/api/files/${file.file_id}/stream`
+    }
+
     // Watchers
     watch(() => props.document, (newDoc) => {
       if (newDoc && newDoc.document_files && newDoc.document_files.length > 0) {
@@ -1021,6 +1121,7 @@ export default {
       formatDate,
       formatFileSize,
       isImageFile,
+      getImageUrl,
       selectFile,
       downloadFile,
       deleteFile,
