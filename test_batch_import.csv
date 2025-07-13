@@ -1,0 +1,6 @@
+logical_id,title,archive_name,document_type,creator,subject,description,publisher,date_created,language,format,identifier,rights,total_pages,notes
+DOC001,Sample Document 1,Test Archive,manuscript,John Smith,History,A sample historical document,University Press,2023,English,PDF,ISBN123,Public Domain,25,Sample note 1
+DOC002,Sample Document 2,Test Archive,book,Jane Doe,Science,A sample scientific document,Science Press,2023,English,PDF,ISBN124,Copyright Protected,150,Sample note 2
+DOC003,Sample Document 3,Main Archive,letter,Bob Johnson,Personal,A personal letter,Private,2022,English,Manuscript,REF001,Restricted,5,Important letter
+DOC004,Sample Document 4,Main Archive,report,Alice Brown,Business,Annual business report,Company Inc,2023,English,PDF,RPT2023,Internal Use,45,Financial report
+DOC005,Sample Document 5,Digital Collection,photograph,Tom Wilson,Art,Historical photograph,Museum,1950,English,TIFF,PHOTO001,Fair Use,1,Black and white photo

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mets:mets xmlns:mets="http://www.loc.gov/METS/" xmlns:mods="http://www.loc.gov/mods/v3" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <mets:dmdSec ID="dmd1">
+    <mets:mdWrap MDTYPE="MODS">
+      <mets:xmlData>
+        <mods:mods>
+          <mods:identifier type="logical">ARCH-DOC-002</mods:identifier>
+          <mods:identifier type="conservative">MO-MANO-005</mods:identifier>
+          <mods:titleInfo>
+            <mods:title>Manoscritto del XV secolo</mods:title>
+          </mods:titleInfo>
+          <mods:abstract>Manoscritto miniato del XV secolo contenente testi religiosi</mods:abstract>
+          <mods:typeOfResource>text</mods:typeOfResource>
+          <mods:name type="corporate">
+            <mods:namePart>Biblioteca Estense Universitaria</mods:namePart>
+          </mods:name>
+          <mods:originInfo>
+            <mods:dateCreated point="start">1450</mods:dateCreated>
+            <mods:dateCreated point="end">1470</mods:dateCreated>
+            <mods:place>
+              <mods:placeTerm>Modena, Italia</mods:placeTerm>
+            </mods:place>
+          </mods:originInfo>
+          <mods:language>
+            <mods:languageTerm>la</mods:languageTerm>
+          </mods:language>
+          <mods:physicalDescription>
+            <mods:extent>45 pages</mods:extent>
+          </mods:physicalDescription>
+          <mods:subject>
+            <mods:topic>manoscritti, religione, miniature, medievale</mods:topic>
+          </mods:subject>
+          <mods:relatedItem type="host">
+            <mods:titleInfo>
+              <mods:title>Collezione Manoscritti</mods:title>
+            </mods:titleInfo>
+          </mods:relatedItem>
+          <mods:relatedItem type="series">
+            <mods:titleInfo>
+              <mods:title>Serie Testi Religiosi</mods:title>
+            </mods:titleInfo>
+          </mods:relatedItem>
+        </mods:mods>
+      </mets:xmlData>
+    </mets:mdWrap>
+  </mets:dmdSec>
+</mets:mets>
