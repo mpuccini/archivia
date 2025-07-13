@@ -6,7 +6,7 @@
         <h2 class="text-2xl font-bold text-gray-900">Document Management</h2>
         <p class="mt-1 text-sm text-gray-600">Manage and organize your digital archives</p>
       </div>
-      <div class="mt-4 sm:mt-0">
+      <div class="mt-4 sm:mt-0 sm:flex sm:space-x-3">
         <button
           @click="showUploadForm = true"
           class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
@@ -16,6 +16,63 @@
           </svg>
           New Document
         </button>
+        
+        <!-- Batch Operations Dropdown -->
+        <Menu as="div" class="relative inline-block text-left">
+          <div>
+            <MenuButton class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+              </svg>
+              Batch Operations
+              <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </MenuButton>
+          </div>
+
+          <transition
+            enter-active-class="transition duration-100 ease-out"
+            enter-from-class="transform scale-95 opacity-0"
+            enter-to-class="transform scale-100 opacity-100"
+            leave-active-class="transition duration-75 ease-in"
+            leave-from-class="transform scale-100 opacity-100"
+            leave-to-class="transform scale-95 opacity-0"
+          >
+            <MenuItems class="absolute right-0 z-50 mt-2 w-56 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <div class="py-1">
+                <MenuItem v-slot="{ active }">
+                  <button
+                    @click="showExcelBatchImport = true"
+                    :class="[
+                      active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                      'group flex items-center px-4 py-2 text-sm w-full text-left'
+                    ]"
+                  >
+                    <svg class="mr-3 h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h6l4 4v10a4 4 0 01-4 4z"></path>
+                    </svg>
+                    Import from Excel
+                  </button>
+                </MenuItem>
+                <MenuItem v-slot="{ active }">
+                  <button
+                    @click="showBatchImageUpload = true"
+                    :class="[
+                      active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                      'group flex items-center px-4 py-2 text-sm w-full text-left'
+                    ]"
+                  >
+                    <svg class="mr-3 h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                    Batch Upload Images
+                  </button>
+                </MenuItem>
+              </div>
+            </MenuItems>
+          </transition>
+        </Menu>
       </div>
     </div>
 
@@ -61,6 +118,109 @@
                 </div>
                 <div class="p-6">
                   <DocumentUploadForm @upload-complete="handleUploadComplete" @cancel="closeUploadForm" />
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </div>
+      </Dialog>
+    </TransitionRoot>
+
+    <!-- Excel Batch Import Modal -->
+    <TransitionRoot appear :show="showExcelBatchImport" as="template">
+      <Dialog as="div" @close="closeExcelBatchImport" class="relative z-50">
+        <TransitionChild
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-black bg-opacity-25" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4 text-center">
+            <TransitionChild
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <DialogPanel class="w-full max-w-7xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+                <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                  <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
+                    Batch Import from Excel
+                  </DialogTitle>
+                  <button
+                    @click="closeExcelBatchImport"
+                    class="rounded-md bg-white text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="p-6">
+                  <ExcelBatchImport @import-complete="handleExcelImportComplete" @cancel="closeExcelBatchImport" />
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </div>
+      </Dialog>
+    </TransitionRoot>
+
+    <!-- Batch Image Upload Modal -->
+    <TransitionRoot appear :show="showBatchImageUpload" as="template">
+      <Dialog as="div" @close="closeBatchImageUpload" class="relative z-50">
+        <TransitionChild
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-black bg-opacity-25" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4 text-center">
+            <TransitionChild
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <DialogPanel class="w-full max-w-6xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+                <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                  <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
+                    Batch Upload Images
+                  </DialogTitle>
+                  <button
+                    @click="closeBatchImageUpload"
+                    class="rounded-md bg-white text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="p-6">
+                  <BatchImageUpload 
+                    @upload-complete="handleBatchImageUploadComplete" 
+                    @cancel="closeBatchImageUpload" 
+                  />
                 </div>
               </DialogPanel>
             </TransitionChild>
@@ -517,6 +677,8 @@ import {
 } from '@headlessui/vue'
 import DocumentUploadForm from './DocumentUploadForm.vue'
 import DocumentDetailModal from './DocumentDetailModal.vue'
+import ExcelBatchImport from './ExcelBatchImport.vue'
+import BatchImageUpload from './BatchImageUpload.vue'
 import axios from 'axios'
 
 export default {
@@ -524,6 +686,8 @@ export default {
   components: {
     DocumentUploadForm,
     DocumentDetailModal,
+    ExcelBatchImport,
+    BatchImageUpload,
     Dialog,
     DialogPanel,
     DialogTitle,
@@ -542,6 +706,8 @@ export default {
     const loading = ref(false)
     const error = ref(null)
     const showUploadForm = ref(false)
+    const showExcelBatchImport = ref(false)
+    const showBatchImageUpload = ref(false)
     const showDeleteConfirm = ref(false)
     const isDeleting = ref(false)
     const currentPage = ref(1)
@@ -604,8 +770,26 @@ export default {
       showUploadForm.value = false
     }
 
+    const closeExcelBatchImport = () => {
+      showExcelBatchImport.value = false
+    }
+
+    const closeBatchImageUpload = () => {
+      showBatchImageUpload.value = false
+    }
+
     const handleUploadComplete = () => {
       closeUploadForm()
+      loadDocuments()
+    }
+
+    const handleExcelImportComplete = () => {
+      closeExcelBatchImport()
+      loadDocuments()
+    }
+
+    const handleBatchImageUploadComplete = () => {
+      closeBatchImageUpload()
       loadDocuments()
     }
 
@@ -917,6 +1101,8 @@ export default {
       loading,
       error,
       showUploadForm,
+      showExcelBatchImport,
+      showBatchImageUpload,
       showDeleteConfirm,
       isDeleting,
       currentPage,
@@ -926,7 +1112,11 @@ export default {
       formatDate,
       toggleAllSelection,
       closeUploadForm,
+      closeExcelBatchImport,
+      closeBatchImageUpload,
       handleUploadComplete,
+      handleExcelImportComplete,
+      handleBatchImageUploadComplete,
       viewDocument,
       openDocumentDetail,
       handleDocumentUpdated,
