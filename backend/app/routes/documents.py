@@ -19,6 +19,27 @@ class BatchDeleteRequest(BaseModel):
     document_ids: List[int]
 
 
+class BatchCreateRequest(BaseModel):
+    documents: List[DocumentCreate]
+
+
+class BatchImportResult(BaseModel):
+    success: List[dict]
+    errors: List[dict]
+
+
+class ImageUploadResult(BaseModel):
+    success: bool
+    message: str
+    document_id: int = None
+
+
+class BatchImageUploadResult(BaseModel):
+    success: List[dict]
+    errors: List[dict]
+    created_documents: List[dict]
+
+
 @router.post("/", response_model=DocumentDetail)
 async def create_document(
     document: DocumentCreate,
@@ -248,3 +269,37 @@ async def batch_download_archives(
     """Download multiple documents as archives in a single ZIP"""
     service = DocumentService(db)
     return service.batch_download_archives(document_ids, current_user.id)
+
+
+@router.post("/batch", response_model=BatchImportResult)
+async def batch_create_documents(
+    request: BatchCreateRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Create multiple documents from batch import"""
+    service = DocumentService(db)
+    return await service.batch_create_documents(request.documents, current_user.id)
+
+
+@router.post("/{document_id}/images", response_model=ImageUploadResult)
+async def upload_document_image(
+    document_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Upload an image for a specific document"""
+    service = DocumentService(db)
+    return await service.upload_document_image(document_id, file, current_user.id)
+
+
+@router.post("/images/batch", response_model=BatchImageUploadResult)
+async def batch_upload_images(
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Batch upload images, matching by filename to logical_id"""
+    service = DocumentService(db)
+    return await service.batch_upload_images(files, current_user.id)

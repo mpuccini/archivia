@@ -629,3 +629,145 @@ class DocumentService:
             media_type="application/zip",
             headers={"Content-Disposition": "attachment; filename=documents_batch.zip"}
         )
+    
+    async def batch_create_documents(self, documents_data: List[DocumentCreate], user_id: int) -> dict:
+        """Create multiple documents from batch import"""
+        success = []
+        errors = []
+        
+        for doc_data in documents_data:
+            try:
+                # Check if logical_id already exists
+                existing = self.db.query(Document).filter(
+                    Document.logical_id == doc_data.logical_id,
+                    Document.owner_id == user_id
+                ).first()
+                
+                if existing:
+                    errors.append({
+                        "logical_id": doc_data.logical_id,
+                        "error": f"Document with logical_id '{doc_data.logical_id}' already exists"
+                    })
+                    continue
+                
+                # Create the document
+                document = self.create_document(doc_data, user_id)
+                success.append({
+                    "logical_id": document.logical_id,
+                    "title": document.title,
+                    "id": document.id
+                })
+                
+            except Exception as e:
+                errors.append({
+                    "logical_id": doc_data.logical_id if hasattr(doc_data, 'logical_id') else 'unknown',
+                    "error": str(e)
+                })
+        
+        return {
+            "success": success,
+            "errors": errors
+        }
+    
+    async def upload_document_image(self, document_id: int, file: UploadFile, user_id: int) -> dict:
+        """Upload an image for a specific document"""
+        # Check if document exists and belongs to user
+        document = self.db.query(Document).filter(
+            Document.id == document_id,
+            Document.owner_id == user_id
+        ).first()
+        
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Validate file type
+        valid_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/tiff', 'application/pdf']
+        valid_extensions = ['.jpg', '.jpeg', '.png', '.tiff', '.tif', '.pdf']
+        
+        if (file.content_type not in valid_types and 
+            not any(file.filename.lower().endswith(ext) for ext in valid_extensions)):
+            raise HTTPException(status_code=400, detail="Invalid file type. Supported: JPG, PNG, TIFF, PDF")
+        
+        try:
+            # Upload file to storage
+            uploaded_file = await self.file_service.upload_file(file, user_id)
+            
+            # Link file to document
+            document_file = DocumentFile(
+                document_id=document.id,
+                file_id=uploaded_file.id,
+                file_use="master",  # Assuming images are master files
+                sequence_number=1
+            )
+            
+            self.db.add(document_file)
+            self.db.commit()
+            
+            return {
+                "success": True,
+                "message": f"Image uploaded successfully for document {document.logical_id}",
+                "document_id": document.id
+            }
+            
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
+    
+    async def batch_upload_images(self, files: List[UploadFile], user_id: int) -> dict:
+        """Batch upload images, matching by filename to logical_id"""
+        success = []
+        errors = []
+        created_documents = []
+        
+        for file in files:
+            try:
+                # Extract logical_id from filename (remove extension)
+                logical_id = os.path.splitext(file.filename)[0]
+                
+                # Check if document with this logical_id exists
+                document = self.db.query(Document).filter(
+                    Document.logical_id == logical_id,
+                    Document.owner_id == user_id
+                ).first()
+                
+                # If document doesn't exist, create a minimal one
+                if not document:
+                    try:
+                        doc_data = DocumentCreate(
+                            logical_id=logical_id,
+                            title=f"Document {logical_id}",
+                            description=f"Auto-created document for image {file.filename}"
+                        )
+                        document = self.create_document(doc_data, user_id)
+                        created_documents.append({
+                            "logical_id": logical_id,
+                            "id": document.id
+                        })
+                    except Exception as e:
+                        errors.append({
+                            "filename": file.filename,
+                            "logical_id": logical_id,
+                            "error": f"Failed to create document: {str(e)}"
+                        })
+                        continue
+                
+                # Upload the image
+                result = await self.upload_document_image(document.id, file, user_id)
+                success.append({
+                    "filename": file.filename,
+                    "logical_id": logical_id,
+                    "document_id": document.id
+                })
+                
+            except Exception as e:
+                errors.append({
+                    "filename": file.filename,
+                    "logical_id": logical_id if 'logical_id' in locals() else 'unknown',
+                    "error": str(e)
+                })
+        
+        return {
+            "success": success,
+            "errors": errors,
+            "created_documents": created_documents
+        }

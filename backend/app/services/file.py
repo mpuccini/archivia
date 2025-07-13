@@ -327,3 +327,50 @@ class FileService:
             
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")
+    
+    async def upload_file(self, file: UploadFile, user_id: int) -> File:
+        """
+        Simple upload method for image files - handles the complete workflow
+        """
+        # Read file content
+        content = await file.read()
+        
+        # Calculate file hash
+        file_hash = hashlib.sha256(content).hexdigest()
+        
+        # Check if file already exists
+        existing_file = self.db.query(File).filter(File.checksum == file_hash).first()
+        if existing_file:
+            return existing_file
+        
+        # Get file info
+        file_size = len(content)
+        mime_type = file.content_type or "application/octet-stream"
+        
+        # Upload to MinIO
+        object_name = f"files/{user_id}/{file_hash}"
+        self.minio_service.upload_object(
+            content,
+            object_name,
+            content_type=mime_type,
+            length=file_size
+        )
+        
+        # Create file record
+        db_file = File(
+            filename=file.filename,
+            original_filename=file.filename,
+            file_path=object_name,
+            file_size=file_size,
+            mime_type=mime_type,
+            checksum=file_hash,
+            owner_id=user_id
+        )
+        
+        self.db.add(db_file)
+        self.db.commit()
+        self.db.refresh(db_file)
+        
+        return db_file
+
+    # ...existing code...
