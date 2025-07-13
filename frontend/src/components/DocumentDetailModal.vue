@@ -134,52 +134,221 @@
                   </div>
 
                   <!-- Edit Mode -->
-                  <div v-else class="space-y-4">
-                    <div>
-                      <label for="edit-title" class="block text-sm font-medium text-gray-700">Title</label>
-                      <input
-                        type="text"
-                        id="edit-title"
-                        v-model="editForm.title"
-                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Enter document title"
-                      />
+                  <div v-else class="space-y-8">
+                    <!-- Basic Information Section -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                      <h4 class="text-lg font-medium text-gray-900 mb-4">📄 Basic Information</h4>
+                      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                          <label for="edit-logical-id" class="block text-sm font-medium text-gray-700">Logical ID *</label>
+                          <input
+                            type="text"
+                            id="edit-logical-id"
+                            v-model="editForm.logical_id"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="Unique document identifier"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label for="edit-conservative-id" class="block text-sm font-medium text-gray-700">Conservative ID</label>
+                          <input
+                            type="text"
+                            id="edit-conservative-id"
+                            v-model="editForm.conservative_id"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="e.g., IT-MO0172"
+                          />
+                        </div>
+                        <div>
+                          <label for="edit-conservative-authority" class="block text-sm font-medium text-gray-700">ID Authority</label>
+                          <input
+                            type="text"
+                            id="edit-conservative-authority"
+                            v-model="editForm.conservative_id_authority"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="e.g., ISIL"
+                          />
+                        </div>
+                        <div class="sm:col-span-2">
+                          <label for="edit-title" class="block text-sm font-medium text-gray-700">Title</label>
+                          <input
+                            type="text"
+                            id="edit-title"
+                            v-model="editForm.title"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="Enter document title"
+                          />
+                        </div>
+                        <div class="sm:col-span-2">
+                          <label for="edit-description" class="block text-sm font-medium text-gray-700">Description</label>
+                          <textarea
+                            id="edit-description"
+                            v-model="editForm.description"
+                            rows="3"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="Enter document description"
+                          ></textarea>
+                        </div>
+                        <div>
+                          <label for="edit-type" class="block text-sm font-medium text-gray-700">Document Type</label>
+                          <select
+                            id="edit-type"
+                            v-model="editForm.document_type"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          >
+                            <option value="">Select type</option>
+                            <option value="manuscript">Manuscript</option>
+                            <option value="photograph">Photograph</option>
+                            <option value="letter">Letter</option>
+                            <option value="document">Document</option>
+                            <option value="map">Map</option>
+                            <option value="drawing">Drawing</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label for="edit-pages" class="block text-sm font-medium text-gray-700">Total Pages</label>
+                          <input
+                            type="number"
+                            id="edit-pages"
+                            v-model.number="editForm.total_pages"
+                            min="1"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="Number of pages"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label for="edit-description" class="block text-sm font-medium text-gray-700">Description</label>
-                      <textarea
-                        id="edit-description"
-                        v-model="editForm.description"
-                        rows="3"
-                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Enter document description"
-                      ></textarea>
+
+                    <!-- Archive Information Section -->
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                      <h4 class="text-lg font-medium text-gray-900 mb-4">🏛️ Archive Information</h4>
+                      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                          <label for="edit-archive-name" class="block text-sm font-medium text-gray-700">Archive Name</label>
+                          <input
+                            type="text"
+                            id="edit-archive-name"
+                            v-model="editForm.archive_name"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="e.g., Archivio di Stato di Modena"
+                          />
+                        </div>
+                        <div class="sm:col-span-2">
+                          <label for="edit-archive-contact" class="block text-sm font-medium text-gray-700">Archive Contact</label>
+                          <input
+                            type="email"
+                            id="edit-archive-contact"
+                            v-model="editForm.archive_contact"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="e.g., as-mo@cultura.gov.it"
+                          />
+                        </div>
+                        <div>
+                          <label for="edit-fund-name" class="block text-sm font-medium text-gray-700">Fund Name</label>
+                          <input
+                            type="text"
+                            id="edit-fund-name"
+                            v-model="editForm.fund_name"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="e.g., Fondo Fotografico"
+                          />
+                        </div>
+                        <div>
+                          <label for="edit-series-name" class="block text-sm font-medium text-gray-700">Series Name</label>
+                          <input
+                            type="text"
+                            id="edit-series-name"
+                            v-model="editForm.series_name"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="e.g., Serie I"
+                          />
+                        </div>
+                        <div class="sm:col-span-2">
+                          <label for="edit-folder-number" class="block text-sm font-medium text-gray-700">Folder/Unit Number</label>
+                          <input
+                            type="text"
+                            id="edit-folder-number"
+                            v-model="editForm.folder_number"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="e.g., Busta 45"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label for="edit-type" class="block text-sm font-medium text-gray-700">Document Type</label>
-                      <select
-                        id="edit-type"
-                        v-model="editForm.document_type"
-                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      >
-                        <option value="">Select type</option>
-                        <option value="manuscript">Manuscript</option>
-                        <option value="photograph">Photograph</option>
-                        <option value="letter">Letter</option>
-                        <option value="document">Document</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label for="edit-pages" class="block text-sm font-medium text-gray-700">Total Pages</label>
-                      <input
-                        type="number"
-                        id="edit-pages"
-                        v-model.number="editForm.total_pages"
-                        min="1"
-                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Number of pages"
-                      />
+
+                    <!-- Temporal and Contextual Information Section -->
+                    <div class="bg-green-50 p-4 rounded-lg">
+                      <h4 class="text-lg font-medium text-gray-900 mb-4">📅 Temporal & Contextual Information</h4>
+                      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                          <label for="edit-date-from" class="block text-sm font-medium text-gray-700">Date From</label>
+                          <input
+                            type="date"
+                            id="edit-date-from"
+                            v-model="editForm.date_from"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label for="edit-date-to" class="block text-sm font-medium text-gray-700">Date To</label>
+                          <input
+                            type="date"
+                            id="edit-date-to"
+                            v-model="editForm.date_to"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label for="edit-period" class="block text-sm font-medium text-gray-700">Historical Period</label>
+                          <input
+                            type="text"
+                            id="edit-period"
+                            v-model="editForm.period"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="e.g., Renaissance, 20th Century"
+                          />
+                        </div>
+                        <div>
+                          <label for="edit-location" class="block text-sm font-medium text-gray-700">Location</label>
+                          <input
+                            type="text"
+                            id="edit-location"
+                            v-model="editForm.location"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="e.g., Modena, Italy"
+                          />
+                        </div>
+                        <div>
+                          <label for="edit-language" class="block text-sm font-medium text-gray-700">Language</label>
+                          <select
+                            id="edit-language"
+                            v-model="editForm.language"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          >
+                            <option value="">Select language</option>
+                            <option value="it">Italian</option>
+                            <option value="en">English</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="es">Spanish</option>
+                            <option value="la">Latin</option>
+                            <option value="other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label for="edit-subjects" class="block text-sm font-medium text-gray-700">Subjects/Keywords</label>
+                          <input
+                            type="text"
+                            id="edit-subjects"
+                            v-model="editForm.subjects"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            placeholder="e.g., architecture, portrait, landscape"
+                          />
+                          <p class="mt-1 text-xs text-gray-500">Separate multiple subjects with commas</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -455,20 +624,29 @@ export default {
     
     // Edit form
     const editForm = reactive({
+      // Basic Information
+      logical_id: '',
+      conservative_id: '',
+      conservative_id_authority: '',
       title: '',
       description: '',
       document_type: '',
       total_pages: null,
-      conservative_id: '',
+      
+      // Archive Information
       archive_name: '',
       archive_contact: '',
       fund_name: '',
       series_name: '',
       folder_number: '',
-      conservative_id_authority: '',
-      period: '',
+      
+      // Temporal & Contextual Information
       date_from: '',
-      date_to: ''
+      date_to: '',
+      period: '',
+      location: '',
+      language: '',
+      subjects: ''
     })
 
     // Computed
@@ -625,20 +803,30 @@ export default {
 
     // Edit methods
     const startEdit = () => {
+      // Basic Information
+      editForm.logical_id = props.document.logical_id || ''
+      editForm.conservative_id = props.document.conservative_id || ''
+      editForm.conservative_id_authority = props.document.conservative_id_authority || ''
       editForm.title = props.document.title || ''
       editForm.description = props.document.description || ''
       editForm.document_type = props.document.document_type || ''
       editForm.total_pages = props.document.total_pages || null
-      editForm.conservative_id = props.document.conservative_id || ''
+      
+      // Archive Information
       editForm.archive_name = props.document.archive_name || ''
       editForm.archive_contact = props.document.archive_contact || ''
       editForm.fund_name = props.document.fund_name || ''
       editForm.series_name = props.document.series_name || ''
       editForm.folder_number = props.document.folder_number || ''
-      editForm.conservative_id_authority = props.document.conservative_id_authority || ''
-      editForm.period = props.document.period || ''
+      
+      // Temporal & Contextual Information
       editForm.date_from = props.document.date_from || ''
       editForm.date_to = props.document.date_to || ''
+      editForm.period = props.document.period || ''
+      editForm.location = props.document.location || ''
+      editForm.language = props.document.language || ''
+      editForm.subjects = props.document.subjects || ''
+      
       isEditing.value = true
     }
 
