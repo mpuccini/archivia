@@ -6,7 +6,7 @@ const API_URL = 'http://localhost:8000'
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
-    token: localStorage.getItem('token') || null,
+    token: null,
     isLoading: false,
     error: null
   }),
@@ -27,7 +27,9 @@ export const useAuthStore = defineStore('auth', {
         })
 
         this.token = response.data.access_token
-        localStorage.setItem('token', this.token)
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.setItem('token', this.token)
+        }
         
         // Set axios default header
         axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
@@ -80,11 +82,18 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       this.user = null
       this.token = null
-      localStorage.removeItem('token')
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem('token')
+      }
       delete axios.defaults.headers.common['Authorization']
     },
 
     async init() {
+      // Safely get token from localStorage
+      if (typeof window !== 'undefined' && window.localStorage) {
+        this.token = localStorage.getItem('token')
+      }
+      
       if (this.token) {
         await this.fetchUser()
       }

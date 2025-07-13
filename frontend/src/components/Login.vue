@@ -1,78 +1,154 @@
 <template>
-  <div class="login-container">
-    <div class="login-form">
-      <h1>Archivia Login</h1>
-      
-      <form @submit.prevent="handleLogin">
-        <div class="form-group">
-          <label for="username">Username:</label>
-          <input
-            id="username"
-            v-model="username"
-            type="text"
-            required
-            :disabled="authStore.isLoading"
-          />
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-50 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+      <!-- Card Container -->
+      <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+        <!-- Header -->
+        <div class="text-center">
+          <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            Archivia Login
+          </h1>
+          <p class="text-sm text-gray-600">
+            Sign in to access your documents
+          </p>
         </div>
-        
-        <div class="form-group">
-          <label for="password">Password:</label>
-          <input
-            id="password"
-            v-model="password"
-            type="password"
-            required
-            :disabled="authStore.isLoading"
-          />
-        </div>
-        
-        <div v-if="authStore.error" class="error">
-          {{ authStore.error }}
-        </div>
-        
-        <button type="submit" :disabled="authStore.isLoading">
-          {{ authStore.isLoading ? 'Logging in...' : 'Login' }}
-        </button>
-      </form>
-      
-      <div class="register-link">
-        <p>Don't have an account? <a href="#" @click.prevent="showRegister = !showRegister">Register here</a></p>
-      </div>
-      
-      <div v-if="showRegister" class="register-form">
-        <h2>Register</h2>
-        <form @submit.prevent="handleRegister">
-          <div class="form-group">
-            <label for="reg-username">Username:</label>
-            <input
-              id="reg-username"
-              v-model="regUsername"
-              type="text"
-              required
-              :disabled="authStore.isLoading"
-            />
+
+        <!-- Login Form -->
+        <form @submit.prevent="handleLogin" class="mt-8 space-y-6">
+          <div class="space-y-4">
+            <!-- Username Field -->
+            <div>
+              <label for="username" class="block text-sm font-medium text-gray-700 mb-1">
+                Username
+              </label>
+              <input
+                id="username"
+                v-model="username"
+                type="text"
+                required
+                :disabled="authStore.isLoading"
+                class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:text-gray-500"
+                placeholder="Enter your username"
+              />
+            </div>
+
+            <!-- Password Field -->
+            <div>
+              <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <input
+                id="password"
+                v-model="password"
+                type="password"
+                required
+                :disabled="authStore.isLoading"
+                class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:text-gray-500"
+                placeholder="Enter your password"
+              />
+            </div>
           </div>
-          
-          <div class="form-group">
-            <label for="reg-password">Password:</label>
-            <input
-              id="reg-password"
-              v-model="regPassword"
-              type="password"
-              required
-              :disabled="authStore.isLoading"
-            />
+
+          <!-- Error Message -->
+          <div v-if="authStore.error" class="bg-red-50 border border-red-200 rounded-lg p-3">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm text-red-800">{{ authStore.error }}</p>
+              </div>
+            </div>
           </div>
-          
-          <button type="submit" :disabled="authStore.isLoading">
-            {{ authStore.isLoading ? 'Registering...' : 'Register' }}
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            :disabled="authStore.isLoading"
+            class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg v-if="authStore.isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            {{ authStore.isLoading ? 'Signing in...' : 'Sign in' }}
           </button>
         </form>
+
+        <!-- Register Section -->
+        <div class="mt-6 pt-6 border-t border-gray-200">
+          <div class="text-center">
+            <p class="text-sm text-gray-600">
+              Don't have an account?
+              <button
+                @click="showRegister = !showRegister"
+                class="font-medium text-blue-600 hover:text-blue-500 transition-colors"
+              >
+                {{ showRegister ? 'Hide registration' : 'Register here' }}
+              </button>
+            </p>
+          </div>
+
+          <!-- Registration Form -->
+          <div v-if="showRegister" class="mt-6 pt-6 border-t border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900 text-center mb-4">
+              Create Account
+            </h2>
+            
+            <form @submit.prevent="handleRegister" class="space-y-4">
+              <!-- Registration Username -->
+              <div>
+                <label for="reg-username" class="block text-sm font-medium text-gray-700 mb-1">
+                  Choose Username
+                </label>
+                <input
+                  id="reg-username"
+                  v-model="regUsername"
+                  type="text"
+                  required
+                  :disabled="authStore.isLoading"
+                  class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:text-gray-500"
+                  placeholder="Choose your username"
+                />
+              </div>
+
+              <!-- Registration Password -->
+              <div>
+                <label for="reg-password" class="block text-sm font-medium text-gray-700 mb-1">
+                  Choose Password
+                </label>
+                <input
+                  id="reg-password"
+                  v-model="regPassword"
+                  type="password"
+                  required
+                  :disabled="authStore.isLoading"
+                  class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:text-gray-500"
+                  placeholder="Choose your password"
+                />
+              </div>
+
+              <!-- Register Button -->
+              <button
+                type="submit"
+                :disabled="authStore.isLoading"
+                class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <svg v-if="authStore.isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {{ authStore.isLoading ? 'Creating account...' : 'Create account' }}
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
-
 <script>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -124,147 +200,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, var(--primary-lighter) 0%, var(--bg-secondary) 100%);
-  padding: var(--spacing-lg);
-}
-
-.login-form {
-  background: var(--bg-primary);
-  padding: var(--spacing-2xl);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  border: 1px solid var(--border-primary);
-  min-width: 400px;
-  max-width: 500px;
-  width: 100%;
-}
-
-h1, h2 {
-  text-align: center;
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-xl);
-  font-weight: 600;
-}
-
-h1 {
-  font-size: var(--text-2xl);
-  color: var(--primary-dark);
-}
-
-h2 {
-  font-size: var(--text-xl);
-  margin-top: var(--spacing-xl);
-  padding-top: var(--spacing-xl);
-  border-top: 1px solid var(--border-primary);
-}
-
-.form-group {
-  margin-bottom: var(--spacing-lg);
-}
-
-label {
-  display: block;
-  margin-bottom: var(--spacing-sm);
-  color: var(--text-secondary);
-  font-weight: 500;
-  font-size: var(--text-sm);
-}
-
-input {
-  width: 100%;
-  padding: var(--spacing-md);
-  border: 1px solid var(--border-secondary);
-  border-radius: var(--radius-md);
-  font-size: var(--text-base);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  font-family: var(--font-sans);
-}
-
-input:focus {
-  outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(50, 169, 195, 0.1);
-}
-
-button {
-  width: 100%;
-  padding: var(--spacing-md);
-  background-color: var(--primary-color);
-  color: var(--text-inverse);
-  border: 1px solid var(--primary-color);
-  border-radius: var(--radius-md);
-  font-size: var(--text-base);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  font-family: var(--font-sans);
-}
-
-button:hover:not(:disabled) {
-  background-color: var(--primary-dark);
-  border-color: var(--primary-dark);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-.error {
-  background-color: #FEE2E2;
-  color: #991B1B;
-  padding: var(--spacing-md);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--spacing-lg);
-  border: 1px solid #FECACA;
-  font-size: var(--text-sm);
-}
-
-.register-link {
-  text-align: center;
-  margin-top: var(--spacing-xl);
-  padding-top: var(--spacing-lg);
-  border-top: 1px solid var(--border-primary);
-}
-
-.register-link p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-}
-
-.register-link a {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color var(--transition-fast);
-}
-
-.register-link a:hover {
-  color: var(--primary-dark);
-  text-decoration: underline;
-}
-
-.register-form {
-  margin-top: var(--spacing-xl);
-}
-
-@media (max-width: 480px) {
-  .login-form {
-    min-width: auto;
-    padding: var(--spacing-xl);
-  }
-}
-</style>

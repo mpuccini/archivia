@@ -2,6 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from app.core.database import get_db
 from app.models.user import User
@@ -12,6 +13,10 @@ from app.services.document import DocumentService
 from app.routes.auth import get_current_user
 
 router = APIRouter()
+
+
+class BatchDeleteRequest(BaseModel):
+    document_ids: List[int]
 
 
 @router.post("/", response_model=DocumentDetail)
@@ -123,6 +128,35 @@ async def update_document(
     return service.get_document(document.id, current_user.id)
 
 
+@router.delete("/batch")
+async def delete_documents_batch(
+    request: BatchDeleteRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Delete multiple documents"""
+    service = DocumentService(db)
+    
+    deleted_count = 0
+    errors = []
+    
+    for document_id in request.document_ids:
+        try:
+            success = service.delete_document(document_id, current_user.id)
+            if success:
+                deleted_count += 1
+            else:
+                errors.append(f"Document {document_id} not found")
+        except Exception as e:
+            errors.append(f"Error deleting document {document_id}: {str(e)}")
+    
+    return {
+        "message": f"Successfully deleted {deleted_count} documents",
+        "deleted_count": deleted_count,
+        "errors": errors if errors else None
+    }
+
+
 @router.delete("/{document_id}")
 async def delete_document(
     document_id: int,
@@ -170,6 +204,17 @@ async def export_mets_xml(
     """Export METS XML for a document"""
     service = DocumentService(db)
     return service.export_mets_xml(document_id, current_user.id)
+
+
+@router.get("/{document_id}/export/csv")
+async def export_single_document_csv(
+    document_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Export CSV metadata for a single document"""
+    service = DocumentService(db)
+    return service.export_metadata_csv([document_id], current_user.id)
 
 
 @router.get("/{document_id}/download/files")

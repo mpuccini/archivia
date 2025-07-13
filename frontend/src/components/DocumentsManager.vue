@@ -1,26 +1,152 @@
 <template>
-  <div class="documents-manager">
-    <div class="header">
-      <h2>Document Management</h2>
-      <div class="actions">
-        <button @click="showUploadForm = true" class="btn btn-primary">
-          <i class="icon-plus"></i> New Document
+  <div class="space-y-6">
+    <!-- Header with actions -->
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-2xl font-bold text-gray-900">Document Management</h2>
+        <p class="mt-1 text-sm text-gray-600">Manage and organize your digital archives</p>
+      </div>
+      <div class="mt-4 sm:mt-0">
+        <button
+          @click="showUploadForm = true"
+          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          New Document
         </button>
       </div>
     </div>
 
     <!-- Upload Form Modal -->
-    <div v-if="showUploadForm" class="modal-overlay" @click="closeUploadForm">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>Upload New Document</h3>
-          <button @click="closeUploadForm" class="close-btn">&times;</button>
+    <TransitionRoot appear :show="showUploadForm" as="template">
+      <Dialog as="div" @close="closeUploadForm" class="relative z-50">
+        <TransitionChild
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-black bg-opacity-25" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4 text-center">
+            <TransitionChild
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <DialogPanel class="w-full max-w-6xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+                <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                  <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
+                    Upload New Document
+                  </DialogTitle>
+                  <button
+                    @click="closeUploadForm"
+                    class="rounded-md bg-white text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="p-6">
+                  <DocumentUploadForm @upload-complete="handleUploadComplete" @cancel="closeUploadForm" />
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
         </div>
-        <div class="modal-body">
-          <DocumentUploadForm @upload-complete="handleUploadComplete" @cancel="closeUploadForm" />
+      </Dialog>
+    </TransitionRoot>
+
+    <!-- Delete Confirmation Modal -->
+    <TransitionRoot appear :show="showDeleteConfirm" as="template">
+      <Dialog as="div" @close="cancelDelete" class="relative z-50">
+        <TransitionChild
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-black bg-opacity-25" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4 text-center">
+            <TransitionChild
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+                <div class="p-6">
+                  <div class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                      <svg class="h-10 w-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                      </svg>
+                    </div>
+                    <div class="flex-1">
+                      <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
+                        Delete Documents
+                      </DialogTitle>
+                      <div class="mt-2">
+                        <p class="text-sm text-gray-500">
+                          Are you sure you want to delete <span class="font-semibold text-gray-900">{{ selectedDocuments.length }}</span> document{{ selectedDocuments.length !== 1 ? 's' : '' }}? This action cannot be undone.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="bg-gray-50 px-6 py-4 sm:flex sm:flex-row-reverse sm:space-x-reverse sm:space-x-3">
+                  <button
+                    @click="confirmDelete"
+                    :disabled="isDeleting"
+                    :class="[
+                      'inline-flex w-full justify-center rounded-md border border-transparent px-4 py-2 text-base font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm transition-colors',
+                      isDeleting
+                        ? 'bg-gray-400 cursor-not-allowed'
+                        : 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+                    ]"
+                  >
+                    <svg v-if="isDeleting" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {{ isDeleting ? 'Deleting...' : 'Delete' }}
+                  </button>
+                  <button
+                    @click="cancelDelete"
+                    :disabled="isDeleting"
+                    class="mt-3 inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:mt-0 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
         </div>
-      </div>
-    </div>
+      </Dialog>
+    </TransitionRoot>
 
     <!-- Document Detail Modal -->
     <DocumentDetailModal 
@@ -31,134 +157,346 @@
       @documentDeleted="handleDocumentDeleted"
     />
 
-    <!-- Documents Table -->
-    <div class="table-container">
-      <div class="table-header">
-        <div class="table-controls">
-          <div class="selection-info" v-if="selectedDocuments.length > 0">
-            {{ selectedDocuments.length }} document(s) selected
-          </div>
-          <div class="batch-actions" v-if="selectedDocuments.length > 0">
-            <button @click="exportSelectedCSV" class="btn btn-outline">
-              <i class="icon-csv"></i> Export CSV
-            </button>
-            <button @click="exportSelectedMETSXML" class="btn btn-outline">
-              <i class="icon-xml"></i> Export METS XML
-            </button>
-            <button @click="downloadSelectedArchives" class="btn btn-outline">
-              <i class="icon-download"></i> Download Archives
-            </button>
-            <button @click="deleteSelectedDocuments" class="btn btn-outline btn-danger">
-              <i class="icon-delete"></i> Delete Selected
+    <!-- Bulk Actions Bar -->
+    <div v-if="selectedDocuments.length > 0" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <span class="text-sm font-medium text-blue-900">
+            {{ selectedDocuments.length }} document{{ selectedDocuments.length !== 1 ? 's' : '' }} selected
+          </span>
+        </div>
+        <div class="flex items-center space-x-3">
+          <button
+            @click="exportSelectedCSV"
+            class="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export CSV
+          </button>
+          <button
+            @click="exportSelectedMETSXML"
+            class="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Export METS XML
+          </button>
+          <button
+            @click="downloadSelectedArchives"
+            class="inline-flex items-center px-3 py-2 border border-blue-300 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            Download Archives
+          </button>
+          <button
+            @click="deleteSelectedDocuments"
+            class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          >
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+            Delete Selected
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="loading" class="flex justify-center items-center py-12">
+      <div class="flex items-center space-x-2">
+        <svg class="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-gray-600">Loading documents...</span>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-red-800">Error loading documents</h3>
+          <div class="mt-2 text-sm text-red-700">{{ error }}</div>
+          <div class="mt-4">
+            <button
+              @click="loadDocuments"
+              class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              Retry
             </button>
           </div>
         </div>
       </div>
-
-      <div v-if="loading" class="loading">
-        <p>Loading documents...</p>
-      </div>
-
-      <div v-else-if="error" class="error">
-        <p>Error loading documents: {{ error }}</p>
-        <button @click="loadDocuments" class="btn btn-primary">Retry</button>
-      </div>
-
-      <div v-else class="table-wrapper">
-        <table class="documents-table">
-        <thead>
-          <tr>
-            <th class="checkbox-column">
-              <input 
-                type="checkbox" 
-                :checked="allSelected"
-                @change="toggleAllSelection"
-              >
-            </th>
-            <th>Logical ID</th>
-            <th>Title</th>
-            <th>Archive</th>
-            <th>Type</th>
-            <th>Pages</th>
-            <th>Files</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="document in documents" :key="document.id" class="document-row" @click="openDocumentDetail(document)">
-            <td class="checkbox-column" @click.stop>
-              <input 
-                type="checkbox" 
-                :value="document.id"
-                v-model="selectedDocuments"
-              >
-            </td>
-            <td class="logical-id">{{ document.logical_id }}</td>
-            <td class="title">{{ document.title || '-' }}</td>
-            <td class="archive">{{ document.archive_name || '-' }}</td>
-            <td class="type">{{ document.document_type || '-' }}</td>
-            <td class="pages">{{ document.total_pages || '-' }}</td>
-            <td class="files">{{ document.file_count }}</td>
-            <td class="created">{{ formatDate(document.created_at) }}</td>
-            <td class="actions" @click.stop>
-              <div class="action-buttons">
-                <button @click="viewDocument(document)" class="btn btn-sm btn-info" title="View Details">
-                  <i class="icon-eye"></i>
-                </button>
-                <div class="dropdown">
-                  <button class="btn btn-sm btn-info dropdown-toggle" @click="toggleDropdown(document.id)" title="Download Options">
-                    <i class="icon-download"></i>
-                  </button>
-                  <div class="dropdown-menu" v-if="openDropdown === document.id" :data-dropdown="document.id">
-                    <a href="#" @click.prevent="exportMetadataCSV(document.id)" class="dropdown-item">
-                      <i class="icon-csv"></i> Export CSV
-                    </a>
-                    <a href="#" @click.prevent="exportMETSXML(document.id)" class="dropdown-item">
-                      <i class="icon-xml"></i> Export METS XML
-                    </a>
-                    <a href="#" @click.prevent="downloadFiles(document.id)" class="dropdown-item">
-                      <i class="icon-images"></i> Download Files
-                    </a>
-                    <a href="#" @click.prevent="downloadArchive(document.id)" class="dropdown-item">
-                      <i class="icon-archive"></i> Download Archive
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-        </table>
-      </div>
-
-      <div v-if="!loading && documents.length === 0" class="empty-state">
-        <p>No documents found.</p>
-        <button @click="showUploadForm = true" class="btn btn-primary">
-          Upload your first document
-        </button>
-      </div>
     </div>
 
-    <!-- Pagination -->
-    <div class="pagination" v-if="totalPages > 1">
-      <button 
-        @click="goToPage(currentPage - 1)"
-        :disabled="currentPage === 1"
-        class="btn btn-outline"
-      >
-        Previous
-      </button>
-      <span class="page-info">
-        Page {{ currentPage }} of {{ totalPages }}
-      </span>
-      <button 
-        @click="goToPage(currentPage + 1)"
-        :disabled="currentPage === totalPages"
-        class="btn btn-outline"
-      >
-        Next
-      </button>
+    <!-- Documents Table -->
+    <div v-else class="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+      <div v-if="documents.length === 0" class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No documents</h3>
+        <p class="mt-1 text-sm text-gray-500">Get started by uploading your first document.</p>
+        <div class="mt-6">
+          <button
+            @click="showUploadForm = true"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Upload Document
+          </button>
+        </div>
+      </div>
+
+      <div v-else>
+        <!-- Ensure minimum height for dropdown visibility -->
+        <div class="overflow-x-auto min-h-[400px] relative" style="overflow-y: visible;">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th scope="col" class="relative w-12 px-6 sm:w-16 sm:px-8">
+                  <input
+                    type="checkbox"
+                    :checked="allSelected"
+                    @change="toggleAllSelection"
+                    class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 sm:left-6"
+                  />
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Logical ID
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Title
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Archive
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Pages
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Files
+                </th>
+                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Created
+                </th>
+                <th scope="col" class="relative px-6 py-3">
+                  <span class="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr
+                v-for="document in documents"
+                :key="document.id"
+                class="hover:bg-gray-50 cursor-pointer"
+                @click="openDocumentDetail(document)"
+              >
+                <td class="relative w-12 px-6 sm:w-16 sm:px-8" @click.stop>
+                  <input
+                    type="checkbox"
+                    :value="document.id"
+                    v-model="selectedDocuments"
+                    class="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 sm:left-6"
+                  />
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {{ document.logical_id }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ document.title || '-' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ document.archive_name || '-' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span v-if="document.document_type" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    {{ document.document_type }}
+                  </span>
+                  <span v-else>-</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ document.total_pages || '-' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ document.file_count }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {{ formatDate(document.created_at) }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium relative" @click.stop style="overflow: visible;">
+                  <div class="flex items-center space-x-2">
+                    <button
+                      @click="viewDocument(document)"
+                      class="text-blue-600 hover:text-blue-900 transition-colors"
+                      title="View Details"
+                    >
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                    </button>
+                    
+                    <!-- Actions Menu -->
+                    <Menu as="div" class="relative inline-block text-left">
+                      <div>
+                        <MenuButton class="text-gray-400 hover:text-gray-600 transition-colors">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                          </svg>
+                        </MenuButton>
+                      </div>
+
+                      <transition
+                        enter-active-class="transition duration-100 ease-out"
+                        enter-from-class="transform scale-95 opacity-0"
+                        enter-to-class="transform scale-100 opacity-100"
+                        leave-active-class="transition duration-75 ease-in"
+                        leave-from-class="transform scale-100 opacity-100"
+                        leave-to-class="transform scale-95 opacity-0"
+                      >
+                        <MenuItems class="absolute right-0 z-50 mt-2 w-48 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                          <div class="py-1">
+                            <MenuItem v-slot="{ active }">
+                              <button
+                                @click="exportMetadataCSV(document.id)"
+                                :class="[
+                                  active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                                  'group flex items-center px-4 py-2 text-sm w-full text-left'
+                                ]"
+                              >
+                                <svg class="mr-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Export CSV
+                              </button>
+                            </MenuItem>
+                            <MenuItem v-slot="{ active }">
+                              <button
+                                @click="exportMETSXML(document.id)"
+                                :class="[
+                                  active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                                  'group flex items-center px-4 py-2 text-sm w-full text-left'
+                                ]"
+                              >
+                                <svg class="mr-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                Export METS XML
+                              </button>
+                            </MenuItem>
+                            <MenuItem v-slot="{ active }">
+                              <button
+                                @click="downloadFiles(document.id)"
+                                :class="[
+                                  active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                                  'group flex items-center px-4 py-2 text-sm w-full text-left'
+                                ]"
+                              >
+                                <svg class="mr-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Download Files
+                              </button>
+                            </MenuItem>
+                            <MenuItem v-slot="{ active }">
+                              <button
+                                @click="downloadArchive(document.id)"
+                                :class="[
+                                  active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                                  'group flex items-center px-4 py-2 text-sm w-full text-left'
+                                ]"
+                              >
+                                <svg class="mr-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                </svg>
+                                Download Archive
+                              </button>
+                            </MenuItem>
+                          </div>
+                        </MenuItems>
+                      </transition>
+                    </Menu>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+          <div class="flex items-center justify-between">
+            <div class="flex-1 flex justify-between sm:hidden">
+              <button
+                @click="goToPage(currentPage - 1)"
+                :disabled="currentPage === 1"
+                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              <button
+                @click="goToPage(currentPage + 1)"
+                :disabled="currentPage === totalPages"
+                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p class="text-sm text-gray-700">
+                  Showing page
+                  <span class="font-medium">{{ currentPage }}</span>
+                  of
+                  <span class="font-medium">{{ totalPages }}</span>
+                  ({{ documents.length }} documents)
+                </p>
+              </div>
+              <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                  <button
+                    @click="goToPage(currentPage - 1)"
+                    :disabled="currentPage === 1"
+                    class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span class="sr-only">Previous</span>
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                  </button>
+                  <button
+                    @click="goToPage(currentPage + 1)"
+                    :disabled="currentPage === totalPages"
+                    class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span class="sr-only">Next</span>
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                  </button>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -166,6 +504,17 @@
 <script>
 import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  TransitionChild,
+  TransitionRoot,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuItems,
+} from '@headlessui/vue'
 import DocumentUploadForm from './DocumentUploadForm.vue'
 import DocumentDetailModal from './DocumentDetailModal.vue'
 import axios from 'axios'
@@ -174,7 +523,16 @@ export default {
   name: 'DocumentsManager',
   components: {
     DocumentUploadForm,
-    DocumentDetailModal
+    DocumentDetailModal,
+    Dialog,
+    DialogPanel,
+    DialogTitle,
+    TransitionChild,
+    TransitionRoot,
+    Menu,
+    MenuButton,
+    MenuItem,
+    MenuItems,
   },
   setup() {
     const authStore = useAuthStore()
@@ -184,7 +542,8 @@ export default {
     const loading = ref(false)
     const error = ref(null)
     const showUploadForm = ref(false)
-    const openDropdown = ref(null)
+    const showDeleteConfirm = ref(false)
+    const isDeleting = ref(false)
     const currentPage = ref(1)
     const totalPages = ref(1)
     const pageSize = 20
@@ -198,23 +557,38 @@ export default {
       error.value = null
       
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/documents/`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/documents`, {
           params: {
-            skip: (currentPage.value - 1) * pageSize,
-            limit: pageSize
+            page: currentPage.value,
+            size: pageSize
           },
           headers: {
             'Authorization': `Bearer ${authStore.token}`
           }
         })
         
-        documents.value = response.data
-        // Calculate total pages (this would need to be returned from the API)
-        totalPages.value = Math.ceil(documents.value.length / pageSize)
+        documents.value = response.data.documents || response.data.items || response.data
+        
+        if (response.data.total_pages) {
+          totalPages.value = response.data.total_pages
+        } else if (response.data.pages) {
+          totalPages.value = response.data.pages
+        }
+        
       } catch (err) {
-        error.value = err.response?.data?.detail || err.message
+        console.error('Error loading documents:', err)
+        error.value = err.response?.data?.detail || err.message || 'Failed to load documents'
       } finally {
         loading.value = false
+      }
+    }
+
+    const formatDate = (dateString) => {
+      if (!dateString) return '-'
+      try {
+        return new Date(dateString).toLocaleDateString()
+      } catch {
+        return dateString
       }
     }
 
@@ -223,35 +597,6 @@ export default {
         selectedDocuments.value = []
       } else {
         selectedDocuments.value = documents.value.map(doc => doc.id)
-      }
-    }
-
-    const toggleDropdown = (documentId) => {
-      openDropdown.value = openDropdown.value === documentId ? null : documentId
-      
-      // Close dropdown if clicking outside after next tick
-      if (openDropdown.value) {
-        nextTick(() => {
-          // Check if dropdown would go outside viewport and adjust position
-          const dropdownElement = document.querySelector(`[data-dropdown="${documentId}"]`)
-          if (dropdownElement) {
-            const rect = dropdownElement.getBoundingClientRect()
-            const viewportWidth = window.innerWidth
-            const viewportHeight = window.innerHeight
-            
-            // Adjust horizontal position if needed
-            if (rect.right > viewportWidth - 20) {
-              dropdownElement.style.right = '0'
-              dropdownElement.style.left = 'auto'
-            }
-            
-            // Adjust vertical position if needed
-            if (rect.bottom > viewportHeight - 20) {
-              dropdownElement.style.top = 'auto'
-              dropdownElement.style.bottom = '100%'
-            }
-          }
-        })
       }
     }
 
@@ -269,26 +614,20 @@ export default {
     }
 
     const openDocumentDetail = async (document) => {
-      console.log('DocumentsManager: Opening document detail for:', document)
       await loadDocumentDetails(document.id)
     }
 
     const loadDocumentDetails = async (documentId) => {
-      console.log('DocumentsManager: Loading document details for ID:', documentId)
       try {
         loading.value = true
-        const url = `${import.meta.env.VITE_API_URL}/api/documents/${documentId}`
-        console.log('DocumentsManager: Fetching from URL:', url)
-        const response = await axios.get(url, {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/documents/${documentId}`, {
           headers: {
             'Authorization': `Bearer ${authStore.token}`
           }
         })
-        console.log('DocumentsManager: Got response:', response.data)
         selectedDocument.value = response.data
-        console.log('DocumentsManager: selectedDocument set to:', selectedDocument.value)
       } catch (err) {
-        console.error('DocumentsManager: Error loading document details:', err)
+        console.error('Error loading document details:', err)
         alert('Failed to load document details: ' + (err.response?.data?.detail || err.message))
       } finally {
         loading.value = false
@@ -296,304 +635,15 @@ export default {
     }
 
     const handleDocumentUpdated = (updatedDocument) => {
-      console.log('Document updated:', updatedDocument)
-      
-      // Update the document in the list
       const index = documents.value.findIndex(doc => doc.id === updatedDocument.id)
       if (index !== -1) {
-        // Update only specific fields that might have changed in the list view
-        documents.value[index] = {
-          ...documents.value[index],
-          logical_id: updatedDocument.logical_id,
-          title: updatedDocument.title,
-          archive_name: updatedDocument.archive_name,
-          document_type: updatedDocument.document_type,
-          total_pages: updatedDocument.total_pages,
-          updated_at: updatedDocument.updated_at
-        }
-      }
-      
-      // Update the selected document if it's the same one
-      if (selectedDocument.value && selectedDocument.value.id === updatedDocument.id) {
-        selectedDocument.value = updatedDocument
+        documents.value[index] = updatedDocument
       }
     }
 
-    const handleDocumentDeleted = (documentId) => {
-      console.log('Document deleted:', documentId)
-      
-      // Remove the document from the list
-      documents.value = documents.value.filter(doc => doc.id !== documentId)
-      
-      // Remove from selected documents if it was selected
-      selectedDocuments.value = selectedDocuments.value.filter(id => id !== documentId)
-      
-      // Clear selected document if it was the deleted one
-      if (selectedDocument.value && selectedDocument.value.id === documentId) {
-        selectedDocument.value = null
-      }
-      
-      // Update pagination if needed
-      updatePagination()
-    }
-
-    const deleteSelectedDocuments = async () => {
-      if (selectedDocuments.value.length === 0) return
-
-      const count = selectedDocuments.value.length
-      const documentText = count === 1 ? 'document' : 'documents'
-      
-      if (!confirm(`Are you sure you want to delete ${count} ${documentText}?\n\nThis will permanently delete:\n- Document metadata\n- All associated files\n- Files from MinIO storage\n\nThis action cannot be undone.`)) {
-        return
-      }
-
-      const deletingIds = [...selectedDocuments.value]
-      let successCount = 0
-      let errorCount = 0
-
-      for (const documentId of deletingIds) {
-        try {
-          const response = await fetch(`${API_URL}/api/documents/${documentId}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${authStore.token}`,
-              'Content-Type': 'application/json'
-            }
-          })
-
-          if (response.ok) {
-            successCount++
-            // Remove from documents list
-            documents.value = documents.value.filter(doc => doc.id !== documentId)
-            // Remove from selected documents
-            selectedDocuments.value = selectedDocuments.value.filter(id => id !== documentId)
-          } else {
-            errorCount++
-            console.error(`Failed to delete document ${documentId}:`, response.statusText)
-          }
-        } catch (error) {
-          errorCount++
-          console.error(`Error deleting document ${documentId}:`, error)
-        }
-      }
-
-      // Show result message
-      if (successCount > 0 && errorCount === 0) {
-        alert(`Successfully deleted ${successCount} ${successCount === 1 ? 'document' : 'documents'}.`)
-      } else if (successCount > 0 && errorCount > 0) {
-        alert(`Deleted ${successCount} ${successCount === 1 ? 'document' : 'documents'} successfully.\n${errorCount} ${errorCount === 1 ? 'document' : 'documents'} failed to delete.`)
-      } else {
-        alert(`Failed to delete ${errorCount} ${errorCount === 1 ? 'document' : 'documents'}.`)
-      }
-
-      // Update pagination
-      updatePagination()
-    }
-
-    const exportMetadataCSV = async (documentId) => {
-      try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/documents/export/csv`,
-          [documentId],
-          {
-            headers: {
-              'Authorization': `Bearer ${authStore.token}`
-            },
-            responseType: 'blob'
-          }
-        )
-        
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement('a')
-        link.href = url
-        link.setAttribute('download', `document_${documentId}_metadata.csv`)
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-      } catch (err) {
-        console.error('Export CSV error:', err)
-      }
-      openDropdown.value = null
-    }
-
-    const exportMETSXML = async (documentId) => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/documents/${documentId}/export/mets`,
-          {
-            headers: {
-              'Authorization': `Bearer ${authStore.token}`
-            },
-            responseType: 'blob'
-          }
-        )
-        
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement('a')
-        link.href = url
-        link.setAttribute('download', `document_${documentId}_mets.xml`)
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-      } catch (err) {
-        console.error('Export METS XML error:', err)
-        if (err.response && err.response.status === 404) {
-          alert('METS XML not available for this document. The document may not have been processed with METS metadata.')
-        } else {
-          alert('Error exporting METS XML. Please try again.')
-        }
-      }
-      openDropdown.value = null
-    }
-
-    const downloadFiles = async (documentId) => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/documents/${documentId}/download/files`,
-          {
-            headers: {
-              'Authorization': `Bearer ${authStore.token}`
-            },
-            responseType: 'blob'
-          }
-        )
-        
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement('a')
-        link.href = url
-        link.setAttribute('download', `document_${documentId}_files.zip`)
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-      } catch (err) {
-        console.error('Download files error:', err)
-      }
-      openDropdown.value = null
-    }
-
-    const downloadArchive = async (documentId) => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/documents/${documentId}/download/archive`,
-          {
-            headers: {
-              'Authorization': `Bearer ${authStore.token}`
-            },
-            responseType: 'blob'
-          }
-        )
-        
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement('a')
-        link.href = url
-        link.setAttribute('download', `document_${documentId}_archive.zip`)
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-      } catch (err) {
-        console.error('Download archive error:', err)
-      }
-      openDropdown.value = null
-    }
-
-    const exportSelectedCSV = async () => {
-      try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/documents/export/csv`,
-          selectedDocuments.value,
-          {
-            headers: {
-              'Authorization': `Bearer ${authStore.token}`
-            },
-            responseType: 'blob'
-          }
-        )
-        
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement('a')
-        link.href = url
-        link.setAttribute('download', `documents_metadata.csv`)
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-      } catch (err) {
-        console.error('Export selected CSV error:', err)
-      }
-    }
-
-    const exportSelectedMETSXML = async () => {
-      if (selectedDocuments.value.length === 0) {
-        alert('Please select at least one document to export')
-        return
-      }
-
-      try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/documents/export/mets`,
-          selectedDocuments.value,
-          {
-            headers: {
-              'Authorization': `Bearer ${authStore.token}`
-            },
-            responseType: 'blob'
-          }
-        )
-        
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement('a')
-        link.href = url
-        link.setAttribute('download', `documents_mets.zip`)
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-      } catch (err) {
-        console.error('Export selected METS XML error:', err)
-        if (err.response && err.response.status === 404) {
-          alert('No METS XML available for the selected documents')
-        } else {
-          alert('Error exporting METS XML. Please try again.')
-        }
-      }
-    }
-
-    const downloadSelectedArchives = async () => {
-      try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/documents/download/batch`,
-          selectedDocuments.value,
-          {
-            headers: {
-              'Authorization': `Bearer ${authStore.token}`
-            },
-            responseType: 'blob'
-          }
-        )
-        
-        const url = window.URL.createObjectURL(new Blob([response.data]))
-        const link = document.createElement('a')
-        link.href = url
-        link.setAttribute('download', `documents_batch.zip`)
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-        window.URL.revokeObjectURL(url)
-      } catch (err) {
-        console.error('Download selected archives error:', err)
-      }
-    }
-
-    const formatDate = (dateString) => {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      })
+    const handleDocumentDeleted = (deletedDocumentId) => {
+      documents.value = documents.value.filter(doc => doc.id !== deletedDocumentId)
+      selectedDocument.value = null
     }
 
     const goToPage = (page) => {
@@ -603,16 +653,261 @@ export default {
       }
     }
 
-    // Close dropdown when clicking outside
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.dropdown')) {
-        openDropdown.value = null
+    // Export and download methods
+    const exportSelectedCSV = async () => {
+      if (selectedDocuments.value.length === 0) return
+      
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/documents/export/csv`, {
+          document_ids: selectedDocuments.value
+        }, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          },
+          responseType: 'blob'
+        })
+        
+        const blob = new Blob([response.data], { type: 'text/csv' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        
+        // Extract filename from Content-Disposition header if available
+        let filename = 'documents.csv' // fallback
+        const contentDisposition = response.headers['content-disposition']
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename=([^;]+)/)
+          if (filenameMatch) {
+            filename = filenameMatch[1].replace(/"/g, '') // remove quotes if present
+          }
+        }
+        
+        link.download = filename
+        link.click()
+        window.URL.revokeObjectURL(url)
+      } catch (err) {
+        console.error('Error exporting CSV:', err)
+        alert('Failed to export CSV: ' + (err.response?.data?.detail || err.message))
+      }
+    }
+
+    const exportSelectedMETSXML = async () => {
+      if (selectedDocuments.value.length === 0) return
+      
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/documents/export/mets`, {
+          document_ids: selectedDocuments.value
+        }, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          },
+          responseType: 'blob'
+        })
+        
+        const blob = new Blob([response.data], { type: 'application/xml' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = 'documents_mets.xml'
+        link.click()
+        window.URL.revokeObjectURL(url)
+      } catch (err) {
+        console.error('Error exporting METS XML:', err)
+        alert('Failed to export METS XML: ' + (err.response?.data?.detail || err.message))
+      }
+    }
+
+    const downloadSelectedArchives = async () => {
+      if (selectedDocuments.value.length === 0) return
+      
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/documents/download/archives`, {
+          document_ids: selectedDocuments.value
+        }, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          },
+          responseType: 'blob'
+        })
+        
+        const blob = new Blob([response.data], { type: 'application/zip' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = 'documents_archives.zip'
+        link.click()
+        window.URL.revokeObjectURL(url)
+      } catch (err) {
+        console.error('Error downloading archives:', err)
+        alert('Failed to download archives: ' + (err.response?.data?.detail || err.message))
+      }
+    }
+
+    const deleteSelectedDocuments = async () => {
+      if (selectedDocuments.value.length === 0) return
+      
+      // Show confirmation modal instead of browser confirm
+      showDeleteConfirm.value = true
+    }
+
+    const confirmDelete = async () => {
+      showDeleteConfirm.value = false
+      isDeleting.value = true
+      
+      try {
+        await axios.delete(`${import.meta.env.VITE_API_URL}/api/documents/batch`, {
+          data: {
+            document_ids: selectedDocuments.value
+          },
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          }
+        })
+        
+        // Remove deleted documents from the list
+        documents.value = documents.value.filter(doc => !selectedDocuments.value.includes(doc.id))
+        selectedDocuments.value = []
+        
+        // You could add a success toast notification here instead of alert
+        alert('Documents deleted successfully')
+      } catch (err) {
+        console.error('Error deleting documents:', err)
+        alert('Failed to delete documents: ' + (err.response?.data?.detail || err.message))
+      } finally {
+        isDeleting.value = false
+      }
+    }
+
+    const cancelDelete = () => {
+      showDeleteConfirm.value = false
+    }
+
+    const exportMetadataCSV = async (documentId) => {
+      try {
+        // Find the document in our list to get its logical_id
+        const doc = documents.value.find(d => d.id === documentId)
+        const logicalId = doc?.logical_id || `document_${documentId}`
+        
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/documents/${documentId}/export/csv`, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          },
+          responseType: 'blob'
+        })
+        
+        const blob = new Blob([response.data], { type: 'text/csv' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        
+        // Use logical_id directly for the filename
+        const sanitizedLogicalId = logicalId.replace(/[^a-zA-Z0-9\-_\.]/g, '_')
+        const filename = `${sanitizedLogicalId}_metadata.csv`
+        
+        link.download = filename
+        link.click()
+        window.URL.revokeObjectURL(url)
+      } catch (err) {
+        console.error('Error exporting CSV:', err)
+        alert('Failed to export CSV: ' + (err.response?.data?.detail || err.message))
+      }
+    }
+
+    const exportMETSXML = async (documentId) => {
+      try {
+        // Find the document in our list to get its logical_id
+        const doc = documents.value.find(d => d.id === documentId)
+        const logicalId = doc?.logical_id || `document_${documentId}`
+        
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/documents/${documentId}/export/mets`, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          },
+          responseType: 'blob'
+        })
+        
+        const blob = new Blob([response.data], { type: 'application/xml' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        
+        // Use logical_id for the filename
+        const sanitizedLogicalId = logicalId.replace(/[^a-zA-Z0-9\-_\.]/g, '_')
+        const filename = `${sanitizedLogicalId}_mets.xml`
+        
+        link.download = filename
+        link.click()
+        window.URL.revokeObjectURL(url)
+      } catch (err) {
+        console.error('Error exporting METS XML:', err)
+        alert('Failed to export METS XML: ' + (err.response?.data?.detail || err.message))
+      }
+    }
+
+    const downloadFiles = async (documentId) => {
+      try {
+        // Find the document in our list to get its logical_id
+        const doc = documents.value.find(d => d.id === documentId)
+        const logicalId = doc?.logical_id || `document_${documentId}`
+        
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/documents/${documentId}/download/files`, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          },
+          responseType: 'blob'
+        })
+        
+        const blob = new Blob([response.data], { type: 'application/zip' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        
+        // Use logical_id for the filename
+        const sanitizedLogicalId = logicalId.replace(/[^a-zA-Z0-9\-_\.]/g, '_')
+        const filename = `${sanitizedLogicalId}_files.zip`
+        
+        link.download = filename
+        link.click()
+        window.URL.revokeObjectURL(url)
+      } catch (err) {
+        console.error('Error downloading files:', err)
+        alert('Failed to download files: ' + (err.response?.data?.detail || err.message))
+      }
+    }
+
+    const downloadArchive = async (documentId) => {
+      try {
+        // Find the document in our list to get its logical_id
+        const doc = documents.value.find(d => d.id === documentId)
+        const logicalId = doc?.logical_id || `document_${documentId}`
+        
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/documents/${documentId}/download/archive`, {
+          headers: {
+            'Authorization': `Bearer ${authStore.token}`
+          },
+          responseType: 'blob'
+        })
+        
+        const blob = new Blob([response.data], { type: 'application/zip' })
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        
+        // Use logical_id for the filename
+        const sanitizedLogicalId = logicalId.replace(/[^a-zA-Z0-9\-_\.]/g, '_')
+        const filename = `${sanitizedLogicalId}_archive.zip`
+        
+        link.download = filename
+        link.click()
+        window.URL.revokeObjectURL(url)
+      } catch (err) {
+        console.error('Error downloading archive:', err)
+        alert('Failed to download archive: ' + (err.response?.data?.detail || err.message))
       }
     }
 
     onMounted(() => {
       loadDocuments()
-      document.addEventListener('click', handleClickOutside)
     })
 
     return {
@@ -622,359 +917,32 @@ export default {
       loading,
       error,
       showUploadForm,
-      openDropdown,
+      showDeleteConfirm,
+      isDeleting,
       currentPage,
       totalPages,
       allSelected,
       loadDocuments,
+      formatDate,
       toggleAllSelection,
-      toggleDropdown,
       closeUploadForm,
       handleUploadComplete,
       viewDocument,
       openDocumentDetail,
-      loadDocumentDetails,
       handleDocumentUpdated,
       handleDocumentDeleted,
-      deleteSelectedDocuments,
-      exportMetadataCSV,
-      exportMETSXML,
-      downloadFiles,
-      downloadArchive,
+      goToPage,
       exportSelectedCSV,
       exportSelectedMETSXML,
       downloadSelectedArchives,
-      formatDate,
-      goToPage
+      deleteSelectedDocuments,
+      confirmDelete,
+      cancelDelete,
+      exportMetadataCSV,
+      exportMETSXML,
+      downloadFiles,
+      downloadArchive
     }
   }
 }
 </script>
-
-<style scoped>
-.documents-manager {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--spacing-xl);
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-2xl);
-  padding-bottom: var(--spacing-lg);
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.header h2 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--text-2xl);
-  font-weight: 600;
-}
-
-.actions {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.btn {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  transition: all var(--transition-fast);
-  font-family: var(--font-sans);
-  text-decoration: none;
-}
-
-.btn-primary {
-  background: var(--primary-color);
-  color: var(--text-inverse);
-  border-color: var(--primary-color);
-}
-
-.btn-primary:hover {
-  background: var(--primary-dark);
-  border-color: var(--primary-dark);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.btn-secondary {
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  border-color: var(--border-secondary);
-}
-
-.btn-secondary:hover {
-  background: var(--bg-tertiary);
-  transform: translateY(-1px);
-}
-
-.btn-outline {
-  background: transparent;
-  color: var(--primary-color);
-  border: 1px solid var(--primary-color);
-}
-
-.btn-outline:hover {
-  background: var(--primary-color);
-  color: var(--text-inverse);
-  transform: translateY(-1px);
-}
-
-.btn-outline.btn-danger {
-  color: var(--accent-danger);
-  border-color: var(--accent-danger);
-}
-
-.btn-outline.btn-danger:hover {
-  background: var(--accent-danger);
-  color: var(--text-inverse);
-  transform: translateY(-1px);
-}
-
-.btn-info {
-  background: var(--primary-light);
-  color: var(--text-inverse);
-  border-color: var(--primary-light);
-}
-
-.btn-info:hover {
-  background: var(--primary-dark);
-  transform: translateY(-1px);
-}
-
-.btn-sm {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--text-xs);
-}
-
-/* Modal styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(27, 60, 74, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: var(--bg-primary);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border-primary);
-  box-shadow: var(--shadow-xl);
-  max-width: 800px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-xl);
-  border-bottom: 1px solid var(--border-primary);
-  background: var(--bg-secondary);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-}
-
-.modal-header h3 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--text-xl);
-  font-weight: 600;
-}
-
-.close-btn:hover {
-  color: var(--text-primary);
-}
-
-.modal-body {
-  padding: var(--spacing-xl);
-}
-
-/* Table styles */
-.table-container {
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-primary);
-  /* Remove overflow hidden to allow dropdowns to show */
-  overflow: visible;
-  box-shadow: var(--shadow-md);
-  /* Ensure container has proper stacking context */
-  position: relative;
-  z-index: 1;
-}
-
-.table-wrapper {
-  /* Handle horizontal scroll for the table content only */
-  overflow-x: auto;
-  overflow-y: visible;
-}
-
-.table-header {
-  padding: var(--spacing-lg) var(--spacing-xl);
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-primary);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
-.table-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.selection-info {
-  font-weight: 500;
-  color: #495057;
-}
-
-.batch-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.documents-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.documents-table th,
-.documents-table td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.documents-table th {
-  background: #f8f9fa;
-  font-weight: 600;
-  color: #495057;
-}
-
-.checkbox-column {
-  width: 40px;
-  text-align: center;
-}
-
-.logical-id {
-  font-family: monospace;
-  font-size: 13px;
-  color: #495057;
-}
-
-.document-row:hover {
-  background: #f8f9fa;
-}
-
-.actions {
-  width: 120px;
-  position: relative;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 5px;
-}
-
-.dropdown {
-  position: relative;
-}
-
-.dropdown {
-  position: relative;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  min-width: 160px;
-  z-index: 9999;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  /* Ensure dropdown shows above table constraints */
-  max-height: none;
-  overflow: visible;
-  /* Add subtle animation */
-  animation: fadeInDropdown 0.2s ease-out;
-}
-
-@keyframes fadeInDropdown {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.dropdown-item {
-  display: block;
-  padding: 8px 12px;
-  color: #495057;
-  text-decoration: none;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dropdown-item:hover {
-  background: #f8f9fa;
-}
-
-.loading, .error, .empty-state {
-  text-align: center;
-  padding: 40px;
-  color: #6c757d;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 15px;
-  margin-top: 20px;
-}
-
-.page-info {
-  font-size: 14px;
-  color: #6c757d;
-}
-
-/* Icons - Modern CSS icons */
-.icon-plus::before { content: '+'; }
-.icon-eye::before { 
-  content: '●';
-  font-size: 12px;
-}
-.icon-download::before { content: '↓'; }
-.icon-csv::before { content: '📊'; }
-.icon-xml::before { content: '📄'; }
-.icon-images::before { content: '🖼'; }
-.icon-archive::before { content: '📦'; }
-</style>

@@ -29,6 +29,19 @@ class DocumentService:
         self.file_service = FileService()
         self.minio_service = MinIOService()
     
+    def _sanitize_filename(self, filename: str) -> str:
+        """Sanitize a string to be safe for use as a filename"""
+        import re
+        # Replace invalid characters with underscores
+        # Keep alphanumeric, hyphens, underscores, and dots
+        sanitized = re.sub(r'[^\w\-_\.]', '_', filename)
+        # Remove any leading/trailing dots or spaces
+        sanitized = sanitized.strip('. ')
+        # Limit length
+        if len(sanitized) > 50:
+            sanitized = sanitized[:50]
+        return sanitized if sanitized else 'document'
+    
     def create_document(self, document_data: DocumentCreate, user_id: int) -> Document:
         """Create a new document"""
         # Check if logical_id already exists
@@ -294,12 +307,23 @@ class DocumentService:
                 doc.scanner_manufacturer, doc.scanner_model, doc.created_at
             ])
         
-        output.seek(0)
+        # Generate filename using logical IDs
+        if len(documents) == 1:
+            # Sanitize logical_id for filename (remove/replace invalid characters)
+            safe_logical_id = self._sanitize_filename(documents[0].logical_id)
+            filename = f"{safe_logical_id}_metadata.csv"
+        else:
+            # For multiple documents, use a generic name or first logical_id + count
+            filename = f"documents_metadata_{len(documents)}_items.csv"
+        
+        # Create proper BytesIO stream
+        csv_content = output.getvalue()
+        csv_bytes = io.BytesIO(csv_content.encode('utf-8'))
         
         return StreamingResponse(
-            io.BytesIO(output.getvalue().encode()),
+            csv_bytes,
             media_type="text/csv",
-            headers={"Content-Disposition": "attachment; filename=documents_metadata.csv"}
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
     
     def export_mets_xml(self, document_id: int, user_id: int) -> StreamingResponse:
