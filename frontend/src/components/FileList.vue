@@ -1,50 +1,48 @@
 <template>
-  <div class="file-list">
-    <div class="header">
-      <h3>My Files</h3>
-      <button @click="refreshFiles" :disabled="isLoading" class="refresh-btn">
+  <div class="bg-white rounded-lg p-6 shadow-md">
+    <div class="flex justify-between items-center mb-5">
+      <h3 class="text-lg font-semibold text-gray-800">My Files</h3>
+      <button @click="refreshFiles" :disabled="isLoading" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm">
         {{ isLoading ? 'Loading...' : 'Refresh' }}
       </button>
     </div>
 
-    <div v-if="isLoading && files.length === 0" class="loading">
+    <div v-if="isLoading && files.length === 0" class="text-center py-10 text-gray-500 text-lg">
       Loading files...
     </div>
 
-    <div v-else-if="files.length === 0" class="empty-state">
-      <p>No files uploaded yet.</p>
-      <p>Use the upload section above to add your first file!</p>
+    <div v-else-if="files.length === 0" class="text-center py-10 text-gray-400">
+      <p class="mb-2">No files uploaded yet.</p>
+      <p class="text-sm">Use the upload section above to add your first file!</p>
     </div>
 
-    <div v-else class="files-grid">
-      <div v-for="file in files" :key="file.id" class="file-card">
-        <div class="file-icon">
-          📄
-        </div>
-        <div class="file-info">
-          <h4 class="file-name" :title="file.original_filename">
+    <div v-else class="grid gap-4 mb-5">
+      <div v-for="file in files" :key="file.id" class="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:shadow transition-shadow bg-white">
+        <div class="text-3xl opacity-70">📄</div>
+        <div class="flex-1 min-w-0">
+          <h4 class="font-medium text-base truncate mb-1" :title="file.original_filename">
             {{ file.original_filename }}
           </h4>
-          <div class="file-details">
-            <span class="file-size">{{ formatFileSize(file.file_size) }}</span>
-            <span class="file-date">{{ formatDate(file.created_at) }}</span>
+          <div class="flex gap-3 text-sm text-gray-500 mb-1">
+            <span>{{ formatFileSize(file.file_size) }}</span>
+            <span>{{ formatDate(file.created_at) }}</span>
           </div>
-          <div v-if="file.content_type" class="file-type">
+          <div v-if="file.content_type" class="text-xs text-gray-400 font-mono">
             {{ file.content_type }}
           </div>
         </div>
-        <div class="file-actions">
+        <div class="flex gap-2">
           <button 
             @click="downloadFile(file)"
             :disabled="isDownloading[file.id]"
-            class="download-btn"
+            class="border border-blue-200 rounded w-9 h-9 flex items-center justify-center text-lg hover:bg-blue-50 hover:border-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {{ isDownloading[file.id] ? '⏳' : '⬇️' }}
           </button>
           <button 
             @click="deleteFile(file)"
             :disabled="isDeleting[file.id]"
-            class="delete-btn"
+            class="border border-red-200 rounded w-9 h-9 flex items-center justify-center text-lg hover:bg-red-50 hover:border-red-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {{ isDeleting[file.id] ? '⏳' : '🗑️' }}
           </button>
@@ -53,21 +51,21 @@
     </div>
 
     <!-- Pagination -->
-    <div v-if="totalFiles > limit" class="pagination">
+    <div v-if="totalFiles > limit" class="flex justify-center items-center gap-4 pt-5 border-t border-gray-100">
       <button 
         @click="prevPage"
         :disabled="currentPage === 1 || isLoading"
-        class="page-btn"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
       >
         Previous
       </button>
-      <span class="page-info">
+      <span class="text-gray-500 text-sm">
         Page {{ currentPage }} of {{ totalPages }}
       </span>
       <button 
         @click="nextPage"
         :disabled="currentPage === totalPages || isLoading"
-        class="page-btn"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
       >
         Next
       </button>
@@ -236,150 +234,4 @@ export default {
 }
 </script>
 
-<style scoped>
-.file-list {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.refresh-btn {
-  background: #6c757d;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: #5a6268;
-}
-
-.loading, .empty-state {
-  text-align: center;
-  padding: 40px;
-  color: #6c757d;
-}
-
-.files-grid {
-  display: grid;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.file-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  transition: box-shadow 0.3s;
-}
-
-.file-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.file-icon {
-  font-size: 32px;
-  opacity: 0.7;
-}
-
-.file-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.file-name {
-  margin: 0 0 8px 0;
-  font-size: 16px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.file-details {
-  display: flex;
-  gap: 12px;
-  font-size: 14px;
-  color: #6c757d;
-  margin-bottom: 4px;
-}
-
-.file-type {
-  font-size: 12px;
-  color: #6c757d;
-  font-family: monospace;
-}
-
-.file-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.download-btn, .delete-btn {
-  background: none;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  width: 36px;
-  height: 36px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 0.3s;
-}
-
-.download-btn:hover:not(:disabled) {
-  background: #e3f2fd;
-  border-color: #2196f3;
-}
-
-.delete-btn:hover:not(:disabled) {
-  background: var(--primary-lighter);
-  border-color: var(--accent-danger);
-}
-
-.download-btn:disabled, .delete-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  padding-top: 20px;
-  border-top: 1px solid #e9ecef;
-}
-
-.page-btn {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.page-btn:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-}
-
-.page-info {
-  color: #6c757d;
-  font-size: 14px;
-}
-</style>
+<!-- Tutti gli stili sono ora gestiti da Tailwind CSS utility classes nelle classi dei template. -->

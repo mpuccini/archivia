@@ -4,13 +4,15 @@ import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import Login from './components/Login.vue'
 import Dashboard from './components/Dashboard.vue'
-import './styles/tailwind.css'
+// import './assets/css/tailwind.css' // Disabilitato: ora uso la CDN
 
+import Guide from './components/Guide.vue'
 // Configurazione del router
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
-  { path: '/dashboard', component: Dashboard }
+  { path: '/dashboard', component: Dashboard },
+  { path: '/guide', component: Guide }
 ]
 
 const router = createRouter({

@@ -2,100 +2,80 @@
   <div class="max-w-4xl mx-auto">
     <!-- Version Badge -->
     <div class="mb-4 flex justify-center">
-      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+      <span class="inline-block px-3 py-1 text-xs font-medium bg-green-50 border border-green-200 text-green-800 rounded">
         ✨ NEW WIZARD v2.0 ✨
       </span>
     </div>
     
     <!-- Wizard Header -->
-    <div class="mb-8">
+    <div class="mb-8 text-center">
       <h2 class="text-2xl font-bold text-gray-900 mb-2">Upload New Document</h2>
       <p class="text-gray-600">Follow the steps to upload and catalog your document</p>
     </div>
 
     <!-- Progress Steps -->
-    <div class="mb-8">
-      <nav class="flex justify-center" aria-label="Progress">
-        <ol class="flex items-start">
-          <li 
-            v-for="(step, index) in steps" 
-            :key="step.id"
-            class="relative flex flex-col items-center"
-            :class="index < steps.length - 1 ? 'mr-8' : ''"
+    <div class="flex items-center justify-between mb-8">
+      <div 
+        v-for="(step, index) in steps" 
+        :key="step.id"
+        :class="[
+          'flex flex-col items-center flex-1 relative',
+          index < currentStep ? 'text-blue-600' : 'text-gray-400'
+        ]"
+      >
+        <!-- Step Circle -->
+        <div :class="[
+          'w-12 h-12 rounded-full border-2 flex items-center justify-center text-sm font-semibold relative z-10 transition-all duration-200',
+          index < currentStep ? 'bg-blue-600 border-blue-600 text-white shadow-md' : (index === currentStep ? 'border-blue-600 bg-white text-blue-600 shadow-md ring-4 ring-blue-100' : 'border-gray-300 bg-white')
+        ]">
+          <svg 
+            v-if="index < currentStep" 
+            class="w-6 h-6" 
+            fill="currentColor" 
+            viewBox="0 0 20 20"
           >
-            <!-- Step Circle -->
-            <div 
-              :class="[
-                'flex h-12 w-12 items-center justify-center rounded-full border-2 text-sm font-semibold transition-all duration-200 relative z-10',
-                index < currentStep 
-                  ? 'border-blue-600 bg-blue-600 text-white shadow-md' 
-                  : index === currentStep
-                  ? 'border-blue-600 bg-white text-blue-600 shadow-md ring-2 ring-blue-200'
-                  : 'border-gray-300 bg-white text-gray-400'
-              ]"
-            >
-              <svg 
-                v-if="index < currentStep" 
-                class="h-6 w-6" 
-                fill="currentColor" 
-                viewBox="0 0 20 20"
-              >
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-              </svg>
-              <span v-else class="text-sm font-bold">{{ index + 1 }}</span>
-            </div>
-            
-            <!-- Connector Line - positioned between circles -->
-            <div 
-              v-if="index < steps.length - 1" 
-              :class="[
-                'absolute top-6 left-12 h-0.5 w-8 transition-colors duration-200 z-0',
-                index < currentStep ? 'bg-blue-600' : 'bg-gray-300'
-              ]"
-            />
-            
-            <!-- Step Label -->
-            <div class="text-center mt-3 max-w-20">
-              <span 
-                :class="[
-                  'text-xs font-medium block leading-tight',
-                  index <= currentStep ? 'text-gray-900' : 'text-gray-500'
-                ]"
-              >
-                {{ step.name }}
-              </span>
-              <span 
-                v-if="index === currentStep"
-                class="text-xs text-blue-600 font-medium mt-1 block"
-              >
-                Active
-              </span>
-            </div>
-          </li>
-        </ol>
-      </nav>
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+          <span v-else>{{ index + 1 }}</span>
+        </div>
+        <!-- Step Connector Line -->
+        <div
+          v-if="index < steps.length - 1"
+          :class="[
+            'absolute top-6 left-12 h-0.5 w-8 transition-colors duration-200 z-0',
+            index < currentStep ? 'bg-blue-600' : 'bg-gray-300'
+          ]"
+        ></div>
+        <!-- Step Label -->
+        <div :class="[
+          'text-sm mt-2 text-center',
+          index === currentStep ? 'text-blue-600 font-medium' : 'text-gray-500'
+        ]">
+          {{ step.name }}
+        </div>
+      </div>
     </div>
 
     <!-- Wizard Content -->
-    <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
       <!-- Step 1: File Upload -->
-      <div v-if="currentStep === 0" class="p-8">
-        <div class="text-center">
+      <div v-if="currentStep === 0" class="px-6 py-4">
+        <div class="text-center mb-8">
           <h3 class="text-lg font-medium text-gray-900 mb-4">Upload Your Document</h3>
-          <p class="text-gray-600 mb-8">Select image files to begin the cataloging process</p>
+          <p class="text-gray-600">Select image files to begin the cataloging process</p>
         </div>
 
         <!-- Metadata Import Section -->
-        <div class="mb-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-          <h4 class="text-md font-medium text-blue-900 mb-3">📋 Optional: Import METS Metadata</h4>
+        <div class="p-4 rounded-md border mb-8 bg-blue-50 border-blue-200 text-blue-800">
+          <h4 class="font-semibold text-blue-900 mb-3">📋 Optional: Import METS Metadata</h4>
           <p class="text-sm text-blue-700 mb-4">Upload a CSV or XML file with METS fields to pre-fill the form automatically</p>
           
           <!-- Metadata file input -->
-          <div class="flex items-center space-x-4">
+          <div class="flex items-center gap-4">
             <button
               @click="triggerMetadataFileInput"
               type="button"
-              class="inline-flex items-center px-4 py-2 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
@@ -103,11 +83,11 @@
               Choose Metadata File
             </button>
             
-            <div v-if="selectedMetadataFile" class="flex items-center space-x-2 text-sm">
+            <div v-if="selectedMetadataFile" class="flex items-center gap-2 text-sm">
               <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>
-              <span class="text-green-700 font-medium">{{ selectedMetadataFile.name }}</span>
+              <span class="font-medium text-green-700">{{ selectedMetadataFile.name }}</span>
               <button
                 @click="clearMetadataFile"
                 class="text-red-500 hover:text-red-700"
@@ -174,12 +154,9 @@
           @dragleave.prevent="isDragOver = false"
           @click="triggerFileInput"
           :class="[
-            'relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors',
-            isDragOver 
-              ? 'border-blue-400 bg-blue-50' 
-              : selectedFiles.length 
-              ? 'border-green-400 bg-green-50' 
-              : 'border-gray-300 hover:border-gray-400'
+            'border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-colors duration-200',
+            isDragOver ? 'border-blue-400 bg-blue-50' : '',
+            selectedFiles.length ? 'border-green-400 bg-green-50' : ''
           ]"
         >
           <input
@@ -187,7 +164,7 @@
             type="file"
             @change="handleFileSelect"
             accept="image/*,.pdf"
-            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            class="hidden"
             multiple
           />
 
@@ -196,7 +173,7 @@
               <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
             <p class="mt-4 text-lg text-gray-600">
-              <span class="font-medium text-blue-600">Click to upload</span> or drag and drop
+              <span class="font-medium text-primary-600">Click to upload</span> or drag and drop
             </p>
             <p class="text-sm text-gray-500">PNG, JPG, TIFF, PDF up to 50MB each</p>
           </div>
@@ -208,8 +185,8 @@
             <div>
               <p class="text-lg font-medium text-gray-900">{{ selectedFiles.length }} file(s) selected</p>
               <div class="mt-2 space-y-2">
-                <div v-for="(file, index) in selectedFiles" :key="file.name" class="flex items-center justify-between bg-white rounded-lg border p-3">
-                  <div class="flex items-center space-x-3">
+                <div v-for="(file, index) in selectedFiles" :key="file.name" class="file-item">
+                  <div class="flex items-center gap-3 flex-1">
                     <div class="flex-shrink-0">
                       <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
@@ -249,18 +226,18 @@
       </div>
 
       <!-- Step 2: Basic Information -->
-      <div v-if="currentStep === 1" class="p-8">
+      <div v-if="currentStep === 1" class="px-6 py-4">
         <h3 class="text-lg font-medium text-gray-900 mb-6">Basic Information</h3>
         
         <div class="space-y-6">
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label for="logical_id" class="block text-sm font-medium text-gray-700">Logical ID *</label>
+              <label for="logical_id" class="block text-sm font-medium text-gray-700 mb-1">Logical ID <span class="text-red-500">*</span></label>
               <input
                 type="text"
                 id="logical_id"
                 v-model="formData.logical_id"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
                 :placeholder="extractedLogicalId"
                 required
               />
@@ -268,12 +245,12 @@
             </div>
 
             <div>
-              <label for="conservative_id" class="block text-sm font-medium text-gray-700">Conservative ID</label>
+              <label for="conservative_id" class="block text-sm font-medium text-gray-700 mb-1">Conservative ID</label>
               <input
                 type="text"
                 id="conservative_id"
                 v-model="formData.conservative_id"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
                 placeholder="e.g., IT-MO0172"
               />
               <p class="mt-1 text-sm text-gray-500">Archive's internal reference number</p>
@@ -281,34 +258,34 @@
           </div>
 
           <div>
-            <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+            <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
             <input
               type="text"
               id="title"
               v-model="formData.title"
-              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
               placeholder="Document title"
             />
           </div>
 
           <div>
-            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea
               id="description"
               v-model="formData.description"
               rows="3"
-              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
               placeholder="Brief description of the document content"
             />
           </div>
 
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label for="document_type" class="block text-sm font-medium text-gray-700">Document Type</label>
+            <label for="document_type" class="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
               <select
                 id="document_type"
                 v-model="formData.document_type"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
               >
                 <option value="">Select type</option>
                 <option value="manuscript">Manuscript</option>
@@ -322,13 +299,13 @@
             </div>
 
             <div>
-              <label for="total_pages" class="block text-sm font-medium text-gray-700">Total Pages</label>
+            <label for="total_pages" class="block text-sm font-medium text-gray-700 mb-1">Total Pages</label>
               <input
                 type="number"
                 id="total_pages"
                 v-model.number="formData.total_pages"
                 min="1"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
                 placeholder="Number of pages"
               />
             </div>
@@ -337,29 +314,29 @@
       </div>
 
       <!-- Step 3: Archive Information -->
-      <div v-if="currentStep === 2" class="p-8">
+      <div v-if="currentStep === 2" class="px-6 py-4">
         <h3 class="text-lg font-medium text-gray-900 mb-6">Archive Information</h3>
         
         <div class="space-y-6">
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label for="archive_name" class="block text-sm font-medium text-gray-700">Archive Name</label>
+              <label for="archive_name" class="form-label">Archive Name</label>
               <input
                 type="text"
                 id="archive_name"
                 v-model="formData.archive_name"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="form-input"
                 placeholder="e.g., Archivio di Stato di Modena"
               />
             </div>
 
             <div>
-              <label for="archive_contact" class="block text-sm font-medium text-gray-700">Archive Contact</label>
+              <label for="archive_contact" class="form-label">Archive Contact</label>
               <input
                 type="email"
                 id="archive_contact"
                 v-model="formData.archive_contact"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="form-input"
                 placeholder="e.g., as-mo@cultura.gov.it"
               />
             </div>
@@ -367,99 +344,99 @@
 
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
             <div>
-              <label for="fund_name" class="block text-sm font-medium text-gray-700">Fund Name</label>
+              <label for="fund_name" class="form-label">Fund Name</label>
               <input
                 type="text"
                 id="fund_name"
                 v-model="formData.fund_name"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="form-input"
                 placeholder="e.g., Fondo Fotografico"
               />
             </div>
 
             <div>
-              <label for="series_name" class="block text-sm font-medium text-gray-700">Series Name</label>
+              <label for="series_name" class="form-label">Series Name</label>
               <input
                 type="text"
                 id="series_name"
                 v-model="formData.series_name"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="form-input"
                 placeholder="e.g., Serie I"
               />
             </div>
 
             <div>
-              <label for="folder_number" class="block text-sm font-medium text-gray-700">Folder/Unit Number</label>
+              <label for="folder_number" class="form-label">Folder/Unit Number</label>
               <input
                 type="text"
                 id="folder_number"
                 v-model="formData.folder_number"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="form-input"
                 placeholder="e.g., Busta 45"
               />
             </div>
           </div>
 
           <div>
-            <label for="conservative_id_authority" class="block text-sm font-medium text-gray-700">ID Authority</label>
+            <label for="conservative_id_authority" class="form-label">ID Authority</label>
             <input
               type="text"
               id="conservative_id_authority"
               v-model="formData.conservative_id_authority"
-              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              class="form-input"
               placeholder="e.g., ISIL"
             />
-            <p class="mt-1 text-sm text-gray-500">Authority that assigned the conservative ID</p>
+            <p class="form-help">Authority that assigned the conservative ID</p>
           </div>
         </div>
       </div>
 
       <!-- Step 4: Dates and Context -->
-      <div v-if="currentStep === 3" class="p-8">
+      <div v-if="currentStep === 3" class="card-body">
         <h3 class="text-lg font-medium text-gray-900 mb-6">Dates and Context</h3>
         
         <div class="space-y-6">
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label for="date_from" class="block text-sm font-medium text-gray-700">Date From</label>
+              <label for="date_from" class="form-label">Date From</label>
               <input
                 type="date"
                 id="date_from"
                 v-model="formData.date_from"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="form-input"
               />
             </div>
 
             <div>
-              <label for="date_to" class="block text-sm font-medium text-gray-700">Date To</label>
+              <label for="date_to" class="form-label">Date To</label>
               <input
                 type="date"
                 id="date_to"
                 v-model="formData.date_to"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="form-input"
               />
             </div>
           </div>
 
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label for="period" class="block text-sm font-medium text-gray-700">Historical Period</label>
+              <label for="period" class="form-label">Historical Period</label>
               <input
                 type="text"
                 id="period"
                 v-model="formData.period"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="form-input"
                 placeholder="e.g., Renaissance, 20th Century"
               />
             </div>
 
             <div>
-              <label for="location" class="block text-sm font-medium text-gray-700">Location</label>
+              <label for="location" class="form-label">Location</label>
               <input
                 type="text"
                 id="location"
                 v-model="formData.location"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="form-input"
                 placeholder="e.g., Modena, Italy"
               />
             </div>
@@ -467,11 +444,11 @@
 
           <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label for="language" class="block text-sm font-medium text-gray-700">Language</label>
+              <label for="language" class="form-label">Language</label>
               <select
                 id="language"
                 v-model="formData.language"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="form-input"
               >
                 <option value="">Select language</option>
                 <option value="it">Italian</option>
@@ -485,22 +462,22 @@
             </div>
 
             <div>
-              <label for="subjects" class="block text-sm font-medium text-gray-700">Subjects/Keywords</label>
+              <label for="subjects" class="form-label">Subjects/Keywords</label>
               <input
                 type="text"
                 id="subjects"
                 v-model="formData.subjects"
-                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                class="form-input"
                 placeholder="e.g., architecture, portrait, landscape"
               />
-              <p class="mt-1 text-sm text-gray-500">Separate multiple subjects with commas</p>
+              <p class="form-help">Separate multiple subjects with commas</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Step 5: Review and Submit -->
-      <div v-if="currentStep === 4" class="p-8">
+      <div v-if="currentStep === 4" class="card-body">
         <h3 class="text-lg font-medium text-gray-900 mb-6">Review and Submit</h3>
         
         <!-- Files Summary -->
@@ -597,12 +574,12 @@
       </div>
 
       <!-- Navigation Buttons -->
-      <div class="border-t border-gray-200 px-8 py-4 flex justify-between">
+      <div class="card-footer flex justify-between">
         <button
           v-if="currentStep > 0"
           @click="previousStep"
           :disabled="uploading"
-          class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
         >
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -611,11 +588,11 @@
         </button>
         <div v-else></div>
 
-        <div class="flex space-x-3">
+        <div class="flex gap-3">
           <button
             @click="$emit('cancel')"
             :disabled="uploading"
-            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             Cancel
           </button>
@@ -624,7 +601,7 @@
             v-if="currentStep < steps.length - 1"
             @click="nextStep"
             :disabled="!canProceedToNextStep || uploading"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center px-4 py-2 border border-blue-600 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             Next
             <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -636,7 +613,7 @@
             v-else
             @click="submitForm"
             :disabled="!canSubmit || uploading"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="inline-flex items-center px-4 py-2 border border-green-600 text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             <svg v-if="uploading" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

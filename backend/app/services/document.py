@@ -293,18 +293,43 @@ class DocumentService:
         
         # Write header
         writer.writerow([
-            'logical_id', 'title', 'description', 'archive_name', 'document_type',
-            'total_pages', 'conservative_id', 'license_url', 'rights_statement',
-            'image_producer', 'scanner_manufacturer', 'scanner_model', 'created_at'
+            # Basic identification
+            'logical_id', 'title', 'description', 'conservative_id', 'conservative_id_authority',
+            # Archive information
+            'archive_name', 'archive_contact', 'fund_name', 'series_name', 'folder_number',
+            # Temporal information
+            'date_from', 'date_to', 'period',
+            # Geographic and contextual information
+            'location', 'language', 'subjects',
+            # Document structure
+            'document_type', 'total_pages',
+            # Rights information
+            'license_url', 'rights_statement',
+            # Technical metadata
+            'image_producer', 'scanner_manufacturer', 'scanner_model',
+            # System fields
+            'created_at'
         ])
         
         # Write data
         for doc in documents:
             writer.writerow([
-                doc.logical_id, doc.title, doc.description, doc.archive_name,
-                doc.document_type, doc.total_pages, doc.conservative_id,
-                doc.license_url, doc.rights_statement, doc.image_producer,
-                doc.scanner_manufacturer, doc.scanner_model, doc.created_at
+                # Basic identification
+                doc.logical_id, doc.title, doc.description, doc.conservative_id, doc.conservative_id_authority,
+                # Archive information
+                doc.archive_name, doc.archive_contact, doc.fund_name, doc.series_name, doc.folder_number,
+                # Temporal information
+                doc.date_from, doc.date_to, doc.period,
+                # Geographic and contextual information
+                doc.location, doc.language, doc.subjects,
+                # Document structure
+                doc.document_type, doc.total_pages,
+                # Rights information
+                doc.license_url, doc.rights_statement,
+                # Technical metadata
+                doc.image_producer, doc.scanner_manufacturer, doc.scanner_model,
+                # System fields
+                doc.created_at
             ])
         
         # Generate filename using logical IDs

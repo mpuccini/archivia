@@ -20,6 +20,19 @@ class Document(Base):
     # Archive information
     archive_name = Column(String(255), nullable=True)  # e.g., "Archivio di stato di Modena"
     archive_contact = Column(String(255), nullable=True)  # Contact email
+    fund_name = Column(String(255), nullable=True)  # Fund/Collection name
+    series_name = Column(String(255), nullable=True)  # Series name
+    folder_number = Column(String(100), nullable=True)  # Folder/Unit number (e.g., "Busta 45")
+    
+    # Temporal information
+    date_from = Column(String(50), nullable=True)  # Start date
+    date_to = Column(String(50), nullable=True)  # End date
+    period = Column(String(255), nullable=True)  # Historical period
+    
+    # Geographic and contextual information
+    location = Column(String(255), nullable=True)  # Place/Location
+    language = Column(String(10), nullable=True)  # Language code (e.g., "it", "en")
+    subjects = Column(Text, nullable=True)  # Subjects/Keywords (comma-separated)
     
     # Rights information
     license_url = Column(String(500), nullable=True)  # DCT license

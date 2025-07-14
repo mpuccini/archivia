@@ -1,6 +1,5 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
     <header class="bg-white shadow-sm border-b border-gray-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
@@ -37,11 +36,9 @@
         </div>
       </div>
     </header>
-
-    <!-- Main content -->
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <main class="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
       <div class="px-4 py-4 sm:px-0">
-        <DocumentsManager />
+        <div class="prose prose-blue max-w-none" v-html="markdownHtml"></div>
       </div>
     </main>
   </div>
@@ -51,40 +48,31 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import DocumentsManager from './DocumentsManager.vue'
+import { marked } from 'marked'
 
 export default {
-  name: 'Dashboard',
-  components: {
-    DocumentsManager
-  },
+  name: 'Guide',
   setup() {
     const router = useRouter()
     const authStore = useAuthStore()
-
     const handleLogout = () => {
       authStore.logout()
       router.push('/login')
     }
 
-    onMounted(async () => {
-      // Ensure user is authenticated
-      await authStore.init()
-      if (!authStore.isAuthenticated) {
-        router.push('/login')
-        return
-      }
+    const markdownHtml = ref('<p>Caricamento guida...</p>')
 
-      // Fetch user info if not already loaded
-      if (!authStore.user) {
-        await authStore.fetchUser()
+    onMounted(async () => {
+      try {
+        const res = await fetch('/guide.md')
+        const md = await res.text()
+        markdownHtml.value = marked.parse(md)
+      } catch (e) {
+        markdownHtml.value = '<p class="text-red-600">Errore nel caricamento della guida.</p>'
       }
     })
 
-    return {
-      authStore,
-      handleLogout
-    }
+    return { authStore, handleLogout, markdownHtml }
   }
 }
 </script>

@@ -4,9 +4,7 @@ Generates METS (Metadata Encoding and Transmission Standard) XML from database r
 """
 
 import xml.etree.ElementTree as ET
-from datetime import datetime
-from typing import List, Optional
-from app.models.document import Document, DocumentFile
+from app.models.document import Document
 
 
 class METSGenerator:
@@ -134,6 +132,80 @@ class METSGenerator:
         if document.description:
             abstract = ET.SubElement(mods, f"{{{self.namespaces['mods']}}}abstract")
             abstract.text = document.description
+        
+        # Archive information - using relatedItem for archival hierarchy
+        if any([document.fund_name, document.series_name, document.folder_number]):
+            related_item = ET.SubElement(mods, f"{{{self.namespaces['mods']}}}relatedItem")
+            related_item.set('type', 'host')
+            
+            if document.fund_name:
+                title_info = ET.SubElement(related_item, f"{{{self.namespaces['mods']}}}titleInfo")
+                title = ET.SubElement(title_info, f"{{{self.namespaces['mods']}}}title")
+                title.text = f"Fund: {document.fund_name}"
+            
+            if document.series_name:
+                part = ET.SubElement(related_item, f"{{{self.namespaces['mods']}}}part")
+                detail = ET.SubElement(part, f"{{{self.namespaces['mods']}}}detail")
+                detail.set('type', 'series')
+                caption = ET.SubElement(detail, f"{{{self.namespaces['mods']}}}caption")
+                caption.text = "Series"
+                title = ET.SubElement(detail, f"{{{self.namespaces['mods']}}}title")
+                title.text = document.series_name
+            
+            if document.folder_number:
+                part = ET.SubElement(related_item, f"{{{self.namespaces['mods']}}}part")
+                detail = ET.SubElement(part, f"{{{self.namespaces['mods']}}}detail")
+                detail.set('type', 'folder')
+                caption = ET.SubElement(detail, f"{{{self.namespaces['mods']}}}caption")
+                caption.text = "Folder"
+                number = ET.SubElement(detail, f"{{{self.namespaces['mods']}}}number")
+                number.text = document.folder_number
+        
+        # Temporal information
+        if document.date_from or document.date_to or document.period:
+            origin_info = ET.SubElement(mods, f"{{{self.namespaces['mods']}}}originInfo")
+            
+            if document.date_from or document.date_to:
+                date_created = ET.SubElement(origin_info, f"{{{self.namespaces['mods']}}}dateCreated")
+                
+                if document.date_from and document.date_to:
+                    date_created.set('point', 'start')
+                    date_created.text = document.date_from
+                    
+                    date_created_end = ET.SubElement(origin_info, f"{{{self.namespaces['mods']}}}dateCreated")
+                    date_created_end.set('point', 'end')
+                    date_created_end.text = document.date_to
+                elif document.date_from:
+                    date_created.text = document.date_from
+                elif document.date_to:
+                    date_created.text = document.date_to
+            
+            if document.period:
+                date_other = ET.SubElement(origin_info, f"{{{self.namespaces['mods']}}}dateOther")
+                date_other.set('type', 'period')
+                date_other.text = document.period
+        
+        # Geographic/location information
+        if document.location:
+            subject = ET.SubElement(mods, f"{{{self.namespaces['mods']}}}subject")
+            geographic = ET.SubElement(subject, f"{{{self.namespaces['mods']}}}geographic")
+            geographic.text = document.location
+        
+        # Language
+        if document.language:
+            language_elem = ET.SubElement(mods, f"{{{self.namespaces['mods']}}}language")
+            language_term = ET.SubElement(language_elem, f"{{{self.namespaces['mods']}}}languageTerm")
+            language_term.set('type', 'text')
+            language_term.text = document.language
+        
+        # Subjects
+        if document.subjects:
+            # Split subjects by semicolon or comma and create separate subject elements
+            subjects_list = [s.strip() for s in document.subjects.replace(';', ',').split(',') if s.strip()]
+            for subject_text in subjects_list:
+                subject = ET.SubElement(mods, f"{{{self.namespaces['mods']}}}subject")
+                topic = ET.SubElement(subject, f"{{{self.namespaces['mods']}}}topic")
+                topic.text = subject_text
         
         # Physical description
         if document.total_pages or document.document_type:

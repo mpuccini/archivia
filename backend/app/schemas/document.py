@@ -33,13 +33,34 @@ class DocumentBase(BaseModel):
     conservative_id_authority: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
+    
+    # Archive information
     archive_name: Optional[str] = None
     archive_contact: Optional[str] = None
+    fund_name: Optional[str] = None
+    series_name: Optional[str] = None
+    folder_number: Optional[str] = None
+    
+    # Temporal information
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
+    period: Optional[str] = None
+    
+    # Geographic and contextual information
+    location: Optional[str] = None
+    language: Optional[str] = None
+    subjects: Optional[str] = None
+    
+    # Rights information
     license_url: Optional[str] = None
     rights_statement: Optional[str] = None
+    
+    # Technical metadata
     image_producer: Optional[str] = None
     scanner_manufacturer: Optional[str] = None
     scanner_model: Optional[str] = None
+    
+    # Physical structure
     document_type: Optional[str] = None
     total_pages: Optional[int] = None
     mets_xml: Optional[str] = None
@@ -57,13 +78,34 @@ class DocumentUpdate(BaseModel):
     conservative_id_authority: Optional[str] = None
     title: Optional[str] = None
     description: Optional[str] = None
+    
+    # Archive information
     archive_name: Optional[str] = None
     archive_contact: Optional[str] = None
+    fund_name: Optional[str] = None
+    series_name: Optional[str] = None
+    folder_number: Optional[str] = None
+    
+    # Temporal information
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
+    period: Optional[str] = None
+    
+    # Geographic and contextual information
+    location: Optional[str] = None
+    language: Optional[str] = None
+    subjects: Optional[str] = None
+    
+    # Rights information
     license_url: Optional[str] = None
     rights_statement: Optional[str] = None
+    
+    # Technical metadata
     image_producer: Optional[str] = None
     scanner_manufacturer: Optional[str] = None
     scanner_model: Optional[str] = None
+    
+    # Physical structure
     document_type: Optional[str] = None
     total_pages: Optional[int] = None
     mets_xml: Optional[str] = None
@@ -106,13 +148,34 @@ class DocumentUpload(BaseModel):
     # Optional metadata fields
     conservative_id: Optional[str] = None
     conservative_id_authority: Optional[str] = None
+    
+    # Archive information
     archive_name: Optional[str] = None
     archive_contact: Optional[str] = None
+    fund_name: Optional[str] = None
+    series_name: Optional[str] = None
+    folder_number: Optional[str] = None
+    
+    # Temporal information
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
+    period: Optional[str] = None
+    
+    # Geographic and contextual information
+    location: Optional[str] = None
+    language: Optional[str] = None
+    subjects: Optional[str] = None
+    
+    # Rights information
     license_url: Optional[str] = None
     rights_statement: Optional[str] = None
+    
+    # Technical metadata
     image_producer: Optional[str] = None
     scanner_manufacturer: Optional[str] = None
     scanner_model: Optional[str] = None
+    
+    # Physical structure
     document_type: Optional[str] = None
     total_pages: Optional[int] = None
     

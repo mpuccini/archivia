@@ -1,0 +1,207 @@
+/**
+ * Global Styles - Archivia Application
+ * Base styles and global resets
+ */
+
+/* === CSS RESET === */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+/* === TYPOGRAPHY === */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  color: var(--color-text-primary);
+}
+
+h1 { font-size: var(--font-size-4xl); margin-bottom: var(--space-6); }
+h2 { font-size: var(--font-size-3xl); margin-bottom: var(--space-5); }
+h3 { font-size: var(--font-size-2xl); margin-bottom: var(--space-4); }
+h4 { font-size: var(--font-size-xl); margin-bottom: var(--space-3); }
+h5 { font-size: var(--font-size-lg); margin-bottom: var(--space-3); }
+h6 { font-size: var(--font-size-base); margin-bottom: var(--space-2); }
+
+p {
+  margin-bottom: var(--space-4);
+  color: var(--color-text-secondary);
+}
+
+a {
+  color: var(--color-primary-600);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-primary-700);
+  text-decoration: underline;
+}
+
+/* === APP LAYOUT === */
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.container--fluid {
+  max-width: none;
+}
+
+.main-content {
+  flex: 1;
+  padding: var(--space-6) 0;
+}
+
+/* === FOCUS STYLES === */
+*:focus {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+/* === SCROLLBARS === */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-400);
+}
+
+/* === RESPONSIVE UTILITIES === */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--space-3);
+  }
+  
+  .main-content {
+    padding: var(--space-4) 0;
+  }
+  
+  .modal {
+    margin: var(--space-2);
+    max-width: calc(100vw - var(--space-4));
+    max-height: calc(100vh - var(--space-4));
+  }
+  
+  .stepper {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  
+  .step:not(:last-child)::after {
+    display: none;
+  }
+}
+
+/* === LOADING ANIMATIONS === */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* === PRINT STYLES === */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .card {
+    box-shadow: none;
+    border: 1px solid var(--color-gray-300);
+  }
+  
+  .btn {
+    display: none;
+  }
+}

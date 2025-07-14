@@ -104,22 +104,6 @@
                   Choose Username
                 </label>
                 <input
-                  id="reg-username"
-                  v-model="regUsername"
-                  type="text"
-                  required
-                  :disabled="authStore.isLoading"
-                  class="block w-full px-3 py-2.5 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-50 disabled:text-gray-500"
-                  placeholder="Choose your username"
-                />
-              </div>
-
-              <!-- Registration Password -->
-              <div>
-                <label for="reg-password" class="block text-sm font-medium text-gray-700 mb-1">
-                  Choose Password
-                </label>
-                <input
                   id="reg-password"
                   v-model="regPassword"
                   type="password"
