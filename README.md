@@ -25,9 +25,9 @@ A modern digital document archiving system built with Vue.js frontend and FastAP
    ```
 
 2. **Access the application**:
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - MinIO Console: http://localhost:9001
+   - Frontend: [http://localhost:3000](http://localhost:3000)
+   - Backend API: [http://localhost:8000](http://localhost:3000)
+   - MinIO Console: [http://localhost:9001](http://localhost:3000)
 
 3. **Stop all services**:
    ```bash
