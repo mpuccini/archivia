@@ -1,74 +1,81 @@
 <template>
-  <div class="max-w-4xl mx-auto">
-    <!-- Version Badge -->
-    <div class="mb-4 flex justify-center">
-      <span class="inline-block px-3 py-1 text-xs font-medium bg-green-50 border border-green-200 text-green-800 rounded">
-        ✨ NEW WIZARD v2.0 ✨
-      </span>
-    </div>
-    
+  <div class="max-w-5xl mx-auto px-4 py-6">
     <!-- Wizard Header -->
-    <div class="mb-8 text-center">
-      <h2 class="text-2xl font-bold text-gray-900 mb-2">Upload New Document</h2>
-      <p class="text-gray-600">Follow the steps to upload and catalog your document</p>
+    <div class="mb-10 text-center">
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">Create New Document</h1>
+      <p class="text-lg text-gray-600">Complete the form to catalog your archival document</p>
     </div>
 
     <!-- Progress Steps -->
-    <div class="flex items-center justify-between mb-8">
-      <div 
-        v-for="(step, index) in steps" 
-        :key="step.id"
-        :class="[
-          'flex flex-col items-center flex-1 relative',
-          index < currentStep ? 'text-blue-600' : 'text-gray-400'
-        ]"
-      >
-        <!-- Step Circle -->
-        <div :class="[
-          'w-12 h-12 rounded-full border-2 flex items-center justify-center text-sm font-semibold relative z-10 transition-all duration-200',
-          index < currentStep ? 'bg-blue-600 border-blue-600 text-white shadow-md' : (index === currentStep ? 'border-blue-600 bg-white text-blue-600 shadow-md ring-4 ring-blue-100' : 'border-gray-300 bg-white')
-        ]">
-          <svg 
-            v-if="index < currentStep" 
-            class="w-6 h-6" 
-            fill="currentColor" 
-            viewBox="0 0 20 20"
-          >
-            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-          </svg>
-          <span v-else>{{ index + 1 }}</span>
-        </div>
-        <!-- Step Connector Line -->
+    <div class="mb-10">
+      <div class="flex items-center justify-between relative">
+        <!-- Progress Bar Background -->
+        <div class="absolute top-6 left-0 right-0 h-1 bg-gray-200 -z-10"></div>
+        <!-- Active Progress Bar -->
         <div
-          v-if="index < steps.length - 1"
-          :class="[
-            'absolute top-6 left-12 h-0.5 w-8 transition-colors duration-200 z-0',
-            index < currentStep ? 'bg-blue-600' : 'bg-gray-300'
-          ]"
+          class="absolute top-6 left-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500 -z-10"
+          :style="{ width: `${(currentStep / (steps.length - 1)) * 100}%` }"
         ></div>
-        <!-- Step Label -->
-        <div :class="[
-          'text-sm mt-2 text-center',
-          index === currentStep ? 'text-blue-600 font-medium' : 'text-gray-500'
-        ]">
-          {{ step.name }}
+
+        <div
+          v-for="(step, index) in steps"
+          :key="step.id"
+          class="flex flex-col items-center flex-1 relative"
+        >
+          <!-- Step Circle -->
+          <div :class="[
+            'w-14 h-14 rounded-full border-4 flex items-center justify-center font-bold relative z-10 transition-all duration-300 shadow-lg',
+            index <= currentStep
+              ? 'bg-gradient-to-br from-blue-500 to-blue-600 border-white text-white scale-110'
+              : 'bg-white border-gray-300 text-gray-400'
+          ]">
+            <svg
+              v-if="index < currentStep"
+              class="w-7 h-7"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+            <span v-else class="text-lg">{{ index + 1 }}</span>
+          </div>
+
+          <!-- Step Label -->
+          <div :class="[
+            'text-sm mt-3 text-center font-medium px-2',
+            index === currentStep ? 'text-blue-600' : (index < currentStep ? 'text-gray-700' : 'text-gray-400')
+          ]">
+            {{ step.name }}
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Wizard Content -->
-    <div class="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+    <div class="bg-white shadow-xl rounded-2xl border border-gray-100 overflow-hidden">
       <!-- Step 1: File Upload -->
-      <div v-if="currentStep === 0" class="px-6 py-4">
+      <div v-if="currentStep === 0" class="p-8">
         <div class="text-center mb-8">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Upload Your Document</h3>
-          <p class="text-gray-600">Select image files to begin the cataloging process</p>
+          <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">Upload Your Files</h3>
+          <p class="text-gray-600">Select image files to begin cataloging your archival document</p>
         </div>
 
         <!-- Metadata Import Section -->
-        <div class="p-4 rounded-md border mb-8 bg-blue-50 border-blue-200 text-blue-800">
-          <h4 class="font-semibold text-blue-900 mb-3">📋 Optional: Import METS Metadata</h4>
-          <p class="text-sm text-blue-700 mb-4">Upload a CSV or XML file with METS fields to pre-fill the form automatically</p>
+        <div class="p-5 rounded-xl border-2 border-dashed border-blue-200 mb-8 bg-gradient-to-br from-blue-50 to-indigo-50">
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div class="flex-1">
+              <h4 class="font-semibold text-blue-900 mb-2">Optional: Import Metadata</h4>
+              <p class="text-sm text-blue-700 mb-4">Upload a CSV or XML file to pre-fill form fields automatically</p>
           
           <!-- Metadata file input -->
           <div class="flex items-center gap-4">
@@ -144,62 +151,69 @@
               </div>
             </div>
           </div>
+            </div>
+          </div>
         </div>
 
         <!-- File Drop Zone -->
-        <div 
+        <div
           @drop="handleDrop"
           @dragover.prevent
           @dragenter.prevent="isDragOver = true"
           @dragleave.prevent="isDragOver = false"
           @click="triggerFileInput"
           :class="[
-            'border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer transition-colors duration-200',
-            isDragOver ? 'border-blue-400 bg-blue-50' : '',
-            selectedFiles.length ? 'border-green-400 bg-green-50' : ''
+            'border-3 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all duration-300 transform',
+            isDragOver ? 'border-blue-500 bg-blue-50 scale-102 shadow-lg' : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-white hover:shadow-md',
+            selectedFiles.length ? 'border-green-500 bg-green-50' : ''
           ]"
         >
           <input
             ref="fileInput"
             type="file"
             @change="handleFileSelect"
-            accept="image/*,.pdf"
+            accept="image/*,.pdf,.dng"
             class="hidden"
             multiple
           />
 
           <div v-if="!selectedFiles.length">
-            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <p class="mt-4 text-lg text-gray-600">
-              <span class="font-medium text-primary-600">Click to upload</span> or drag and drop
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full mb-4">
+              <svg class="w-10 h-10 text-blue-600" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </div>
+            <p class="mt-4 text-xl font-semibold text-gray-700">
+              <span class="text-blue-600">Click to upload</span> or drag and drop
             </p>
-            <p class="text-sm text-gray-500">PNG, JPG, TIFF, PDF up to 50MB each</p>
+            <p class="text-sm text-gray-500 mt-2">Supported: PNG, JPG, TIFF, DNG, PDF</p>
+            <p class="text-xs text-gray-400 mt-1">(DNG files up to 80GB, others up to 50MB)</p>
           </div>
 
           <div v-else class="space-y-4">
-            <svg class="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-4">
+              <svg class="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
             <div>
-              <p class="text-lg font-medium text-gray-900">{{ selectedFiles.length }} file(s) selected</p>
-              <div class="mt-2 space-y-2">
-                <div v-for="(file, index) in selectedFiles" :key="file.name" class="file-item">
+              <p class="text-xl font-bold text-gray-900 mb-4">{{ selectedFiles.length }} file{{ selectedFiles.length > 1 ? 's' : '' }} selected</p>
+              <div class="mt-4 space-y-2 max-h-48 overflow-y-auto">
+                <div v-for="(file, index) in selectedFiles" :key="file.name" class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
                   <div class="flex items-center gap-3 flex-1">
-                    <div class="flex-shrink-0">
-                      <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2v12a2 2 0 002 2z" />
+                    <div class="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <div>
-                      <p class="text-sm font-medium text-gray-900">{{ file.name }}</p>
-                      <p class="text-sm text-gray-500">{{ formatFileSize(file.size) }}</p>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 truncate">{{ file.name }}</p>
+                      <p class="text-xs text-gray-500">{{ formatFileSize(file.size) }}</p>
                     </div>
                   </div>
                   <button
                     @click.stop="removeFile(index)"
-                    class="text-red-500 hover:text-red-700"
+                    class="flex-shrink-0 w-8 h-8 flex items-center justify-center text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -210,7 +224,7 @@
             </div>
             <button
               @click.stop="clearFiles"
-              class="text-sm text-gray-500 hover:text-gray-700"
+              class="text-sm text-red-600 hover:text-red-700 font-medium mt-4 hover:underline"
             >
               Clear all files
             </button>
@@ -218,266 +232,501 @@
         </div>
 
         <!-- Auto-extracted filename preview -->
-        <div v-if="selectedFiles.length" class="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 class="text-sm font-medium text-blue-900 mb-2">Auto-extracted Document ID</h4>
-          <p class="text-sm text-blue-700">{{ extractedLogicalId }}</p>
-          <p class="text-xs text-blue-600 mt-1">This will be used as the default Logical ID (you can modify it in the next step)</p>
+        <div v-if="selectedFiles.length" class="mt-6 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0">
+              <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div>
+              <h4 class="text-sm font-semibold text-blue-900 mb-1">Auto-extracted Document ID</h4>
+              <p class="text-sm text-blue-700">{{ extractedLogicalId }}</p>
+              <p class="text-xs text-blue-600 mt-1">This will be used as the default Logical ID below</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Basic Information Section (combined with Upload) -->
+        <div class="space-y-6 mt-8">
+          <!-- Identifiers Section -->
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
+            <h4 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Document Identifiers</h4>
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div>
+                <label for="logical_id" class="block text-sm font-semibold text-gray-700 mb-2">
+                  Logical ID <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="logical_id"
+                  v-model="formData.logical_id"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  :placeholder="extractedLogicalId"
+                  required
+                />
+                <p class="mt-2 text-xs text-gray-500">Unique identifier for this document</p>
+              </div>
+
+              <div>
+                <label for="conservative_id" class="block text-sm font-semibold text-gray-700 mb-2">Conservative ID</label>
+                <input
+                  type="text"
+                  id="conservative_id"
+                  v-model="formData.conservative_id"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="e.g., IT-MO0172"
+                />
+                <p class="mt-2 text-xs text-gray-500">Archive's internal reference</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Content Section -->
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
+            <h4 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Content Description</h4>
+            <div class="space-y-5">
+              <div>
+                <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">Title</label>
+                <input
+                  type="text"
+                  id="title"
+                  v-model="formData.title"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="Enter document title"
+                />
+              </div>
+
+              <div>
+                <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                <textarea
+                  id="description"
+                  v-model="formData.description"
+                  rows="4"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="Brief description of the document content and significance"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Classification Section -->
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
+            <h4 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Classification</h4>
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div>
+                <label for="document_type" class="block text-sm font-semibold text-gray-700 mb-2">Document Type</label>
+                <select
+                  id="document_type"
+                  v-model="formData.document_type"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                >
+                  <option value="">Select type</option>
+                  <option value="manuscript">Manuscript</option>
+                  <option value="photograph">Photograph</option>
+                  <option value="letter">Letter</option>
+                  <option value="document">Document</option>
+                  <option value="map">Map</option>
+                  <option value="drawing">Drawing</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="total_pages" class="block text-sm font-semibold text-gray-700 mb-2">Total Pages</label>
+                <input
+                  type="number"
+                  id="total_pages"
+                  v-model.number="formData.total_pages"
+                  min="1"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="Number of pages"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Step 2: Basic Information -->
-      <div v-if="currentStep === 1" class="px-6 py-4">
-        <h3 class="text-lg font-medium text-gray-900 mb-6">Basic Information</h3>
-        
+      <!-- Step 2: Archive & Context -->
+      <div v-if="currentStep === 1" class="p-8">
+        <div class="mb-8">
+          <div class="inline-flex items-center justify-center w-14 h-14 bg-blue-100 rounded-full mb-4">
+            <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">Archive & Context</h3>
+          <p class="text-gray-600">Archival context, temporal and geographic information</p>
+        </div>
+
         <div class="space-y-6">
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <!-- Archive Details Section -->
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
+            <h4 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Archive Details</h4>
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div>
+                <label for="archive_name" class="block text-sm font-semibold text-gray-700 mb-2">Archive Name</label>
+                <input
+                  type="text"
+                  id="archive_name"
+                  v-model="formData.archive_name"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="e.g., Archivio di Stato di Modena"
+                />
+              </div>
+
+              <div>
+                <label for="archive_contact" class="block text-sm font-semibold text-gray-700 mb-2">Archive Contact</label>
+                <input
+                  type="email"
+                  id="archive_contact"
+                  v-model="formData.archive_contact"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="e.g., as-mo@cultura.gov.it"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Archival Hierarchy Section -->
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
+            <h4 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Archival Hierarchy</h4>
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+              <div>
+                <label for="fund_name" class="block text-sm font-semibold text-gray-700 mb-2">Fund Name</label>
+                <input
+                  type="text"
+                  id="fund_name"
+                  v-model="formData.fund_name"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="e.g., Fondo Fotografico"
+                />
+              </div>
+
+              <div>
+                <label for="series_name" class="block text-sm font-semibold text-gray-700 mb-2">Series Name</label>
+                <input
+                  type="text"
+                  id="series_name"
+                  v-model="formData.series_name"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="e.g., Serie I"
+                />
+              </div>
+
+              <div>
+                <label for="folder_number" class="block text-sm font-semibold text-gray-700 mb-2">Folder/Unit Number</label>
+                <input
+                  type="text"
+                  id="folder_number"
+                  v-model="formData.folder_number"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="e.g., Busta 45"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Authority Section -->
+          <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-xl border border-gray-200">
+            <h4 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Identification Authority</h4>
             <div>
-              <label for="logical_id" class="block text-sm font-medium text-gray-700 mb-1">Logical ID <span class="text-red-500">*</span></label>
+              <label for="conservative_id_authority" class="block text-sm font-semibold text-gray-700 mb-2">ID Authority</label>
               <input
                 type="text"
-                id="logical_id"
-                v-model="formData.logical_id"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
-                :placeholder="extractedLogicalId"
-                required
+                id="conservative_id_authority"
+                v-model="formData.conservative_id_authority"
+                class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                placeholder="e.g., ISIL"
               />
-              <p class="mt-1 text-sm text-gray-500">Unique identifier for this document</p>
-            </div>
-
-            <div>
-              <label for="conservative_id" class="block text-sm font-medium text-gray-700 mb-1">Conservative ID</label>
-              <input
-                type="text"
-                id="conservative_id"
-                v-model="formData.conservative_id"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
-                placeholder="e.g., IT-MO0172"
-              />
-              <p class="mt-1 text-sm text-gray-500">Archive's internal reference number</p>
-            </div>
-          </div>
-
-          <div>
-            <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-            <input
-              type="text"
-              id="title"
-              v-model="formData.title"
-              class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
-              placeholder="Document title"
-            />
-          </div>
-
-          <div>
-            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea
-              id="description"
-              v-model="formData.description"
-              rows="3"
-              class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
-              placeholder="Brief description of the document content"
-            />
-          </div>
-
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-            <label for="document_type" class="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
-              <select
-                id="document_type"
-                v-model="formData.document_type"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
-              >
-                <option value="">Select type</option>
-                <option value="manuscript">Manuscript</option>
-                <option value="photograph">Photograph</option>
-                <option value="letter">Letter</option>
-                <option value="document">Document</option>
-                <option value="map">Map</option>
-                <option value="drawing">Drawing</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div>
-            <label for="total_pages" class="block text-sm font-medium text-gray-700 mb-1">Total Pages</label>
-              <input
-                type="number"
-                id="total_pages"
-                v-model.number="formData.total_pages"
-                min="1"
-                class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors duration-200"
-                placeholder="Number of pages"
-              />
+              <p class="mt-2 text-xs text-gray-500">Authority that assigned the conservative ID</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Step 3: Archive Information -->
-      <div v-if="currentStep === 2" class="px-6 py-4">
-        <h3 class="text-lg font-medium text-gray-900 mb-6">Archive Information</h3>
-        
+      <!-- Step 3: ECO-MiC Metadata -->
+      <div v-if="currentStep === 2" class="p-8">
+        <div class="mb-8">
+          <div class="inline-flex items-center justify-center w-14 h-14 bg-purple-100 rounded-full mb-4">
+            <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-900 mb-2">ECO-MiC Metadata</h3>
+          <p class="text-gray-600">Optional fields for METS ECO-MiC 1.2 compliance</p>
+        </div>
+
         <div class="space-y-6">
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <label for="archive_name" class="form-label">Archive Name</label>
-              <input
-                type="text"
-                id="archive_name"
-                v-model="formData.archive_name"
-                class="form-input"
-                placeholder="e.g., Archivio di Stato di Modena"
-              />
+          <!-- Type of Resource Section -->
+          <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl border border-purple-200">
+            <h4 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Resource Type & Physical Description</h4>
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div>
+                <label for="type_of_resource" class="block text-sm font-semibold text-gray-700 mb-2">Type of Resource</label>
+                <select
+                  id="type_of_resource"
+                  v-model="formData.type_of_resource"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                >
+                  <option value="">Select type</option>
+                  <option value="risorsa manoscritta">Risorsa manoscritta</option>
+                  <option value="documento testuale">Documento testuale</option>
+                  <option value="documento cartografico">Documento cartografico</option>
+                  <option value="documento fotografico">Documento fotografico</option>
+                  <option value="documento grafico">Documento grafico</option>
+                  <option value="risorsa a stampa">Risorsa a stampa</option>
+                </select>
+                <p class="mt-2 text-xs text-gray-500">Main resource type per ECO-MiC standard</p>
+              </div>
+
+              <div>
+                <label for="physical_form" class="block text-sm font-semibold text-gray-700 mb-2">Physical Form</label>
+                <input
+                  type="text"
+                  id="physical_form"
+                  v-model="formData.physical_form"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="e.g., documento testuale, mappa"
+                />
+                <p class="mt-2 text-xs text-gray-500">Physical format with authority="gmd"</p>
+              </div>
             </div>
 
-            <div>
-              <label for="archive_contact" class="form-label">Archive Contact</label>
+            <div class="mt-4">
+              <label for="extent_description" class="block text-sm font-semibold text-gray-700 mb-2">Extent Description</label>
               <input
-                type="email"
-                id="archive_contact"
-                v-model="formData.archive_contact"
-                class="form-input"
-                placeholder="e.g., as-mo@cultura.gov.it"
+                type="text"
+                id="extent_description"
+                v-model="formData.extent_description"
+                class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                placeholder="e.g., c. 14 nel fascicolo, 1 volume, 25 carte"
               />
+              <p class="mt-2 text-xs text-gray-500">Detailed physical extent</p>
             </div>
           </div>
 
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
-            <div>
-              <label for="fund_name" class="form-label">Fund Name</label>
-              <input
-                type="text"
-                id="fund_name"
-                v-model="formData.fund_name"
-                class="form-input"
-                placeholder="e.g., Fondo Fotografico"
-              />
+          <!-- Producer/Creator Section -->
+          <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 p-6 rounded-xl border border-indigo-200">
+            <h4 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Producer & Creator Information</h4>
+
+            <!-- Producer -->
+            <div class="mb-4 p-4 bg-white/70 rounded-lg border border-indigo-200/50">
+              <h5 class="text-sm font-semibold text-indigo-900 mb-3">Producer (Author/Compiler)</h5>
+              <div class="space-y-4">
+                <div>
+                  <label for="producer_name" class="block text-sm font-semibold text-gray-700 mb-2">Producer Name</label>
+                  <input
+                    type="text"
+                    id="producer_name"
+                    v-model="formData.producer_name"
+                    class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                    placeholder="e.g., Monastero di San Colombano"
+                  />
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label for="producer_type" class="block text-sm font-semibold text-gray-700 mb-2">Producer Type</label>
+                    <select
+                      id="producer_type"
+                      v-model="formData.producer_type"
+                      class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                    >
+                      <option value="corporate">Corporate</option>
+                      <option value="personal">Personal</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="producer_role" class="block text-sm font-semibold text-gray-700 mb-2">Producer Role</label>
+                    <input
+                      type="text"
+                      id="producer_role"
+                      v-model="formData.producer_role"
+                      class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                      placeholder="e.g., producer, author, compiler"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label for="series_name" class="form-label">Series Name</label>
-              <input
-                type="text"
-                id="series_name"
-                v-model="formData.series_name"
-                class="form-input"
-                placeholder="e.g., Serie I"
-              />
-            </div>
+            <!-- Creator -->
+            <div class="p-4 bg-white/70 rounded-lg border border-indigo-200/50">
+              <h5 class="text-sm font-semibold text-indigo-900 mb-3">Creator (Contributor)</h5>
+              <div class="space-y-4">
+                <div>
+                  <label for="creator_name" class="block text-sm font-semibold text-gray-700 mb-2">Creator Name</label>
+                  <input
+                    type="text"
+                    id="creator_name"
+                    v-model="formData.creator_name"
+                    class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                    placeholder="e.g., Giovanni Rossi"
+                  />
+                </div>
 
-            <div>
-              <label for="folder_number" class="form-label">Folder/Unit Number</label>
-              <input
-                type="text"
-                id="folder_number"
-                v-model="formData.folder_number"
-                class="form-input"
-                placeholder="e.g., Busta 45"
-              />
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label for="creator_type" class="block text-sm font-semibold text-gray-700 mb-2">Creator Type</label>
+                    <select
+                      id="creator_type"
+                      v-model="formData.creator_type"
+                      class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                    >
+                      <option value="personal">Personal</option>
+                      <option value="corporate">Corporate</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="creator_role" class="block text-sm font-semibold text-gray-700 mb-2">Creator Role</label>
+                    <input
+                      type="text"
+                      id="creator_role"
+                      v-model="formData.creator_role"
+                      class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                      placeholder="e.g., creator, contributor, editor"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
+          <!-- Rights Metadata Section -->
+          <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-xl border border-red-200">
+            <h4 class="text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Rights Metadata (metsrights)</h4>
+            <div class="space-y-5">
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label for="rights_category" class="block text-sm font-semibold text-gray-700 mb-2">Rights Category</label>
+                  <select
+                    id="rights_category"
+                    v-model="formData.rights_category"
+                    class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  >
+                    <option value="">Select category</option>
+                    <option value="COPYRIGHTED">COPYRIGHTED</option>
+                    <option value="PUBLIC DOMAIN">PUBLIC DOMAIN</option>
+                    <option value="CONTRACTUAL">CONTRACTUAL</option>
+                    <option value="OTHER">OTHER</option>
+                  </select>
+                  <p class="mt-2 text-xs text-gray-500">Copyright status</p>
+                </div>
+
+                <div>
+                  <label for="rights_holder" class="block text-sm font-semibold text-gray-700 mb-2">Rights Holder</label>
+                  <input
+                    type="text"
+                    id="rights_holder"
+                    v-model="formData.rights_holder"
+                    class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                    placeholder="e.g., Archivio di Stato di Modena"
+                  />
+                  <p class="mt-2 text-xs text-gray-500">Organization/person holding rights</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label for="rights_constraint" class="block text-sm font-semibold text-gray-700 mb-2">Rights Constraint</label>
+                  <input
+                    type="text"
+                    id="rights_constraint"
+                    v-model="formData.rights_constraint"
+                    class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                    placeholder="e.g., NoC-OKLR, InC, InC-EDU"
+                  />
+                  <p class="mt-2 text-xs text-gray-500">Rights statement code</p>
+                </div>
+
+                <div>
+                  <label for="license_url" class="block text-sm font-semibold text-gray-700 mb-2">License URL</label>
+                  <input
+                    type="url"
+                    id="license_url"
+                    v-model="formData.license_url"
+                    class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                    placeholder="https://creativecommons.org/..."
+                  />
+                  <p class="mt-2 text-xs text-gray-500">Link to license details</p>
+                </div>
+              </div>
+
+              <div>
+                <label for="rights_statement" class="block text-sm font-semibold text-gray-700 mb-2">Rights Statement</label>
+                <textarea
+                  id="rights_statement"
+                  v-model="formData.rights_statement"
+                  rows="2"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="Additional rights information"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Technical Metadata Section -->
+          <div class="border-b border-gray-200 pb-6">
+            <h4 class="text-md font-medium text-gray-900 mb-4">Technical Metadata (Scanner/Image)</h4>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label for="image_producer" class="block text-sm font-semibold text-gray-700 mb-2">Image Producer</label>
+                <input
+                  type="text"
+                  id="image_producer"
+                  v-model="formData.image_producer"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="e.g., EDS Gamma"
+                />
+              </div>
+
+              <div>
+                <label for="scanner_manufacturer" class="block text-sm font-semibold text-gray-700 mb-2">Scanner Manufacturer</label>
+                <input
+                  type="text"
+                  id="scanner_manufacturer"
+                  v-model="formData.scanner_manufacturer"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="e.g., Metis Systems srl"
+                />
+              </div>
+
+              <div>
+                <label for="scanner_model" class="block text-sm font-semibold text-gray-700 mb-2">Scanner Model</label>
+                <input
+                  type="text"
+                  id="scanner_model"
+                  v-model="formData.scanner_model"
+                  class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                  placeholder="e.g., DRS Scanner Model X"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Record Status -->
           <div>
-            <label for="conservative_id_authority" class="form-label">ID Authority</label>
-            <input
-              type="text"
-              id="conservative_id_authority"
-              v-model="formData.conservative_id_authority"
-              class="form-input"
-              placeholder="e.g., ISIL"
-            />
-            <p class="form-help">Authority that assigned the conservative ID</p>
+            <label for="record_status" class="block text-sm font-semibold text-gray-700 mb-2">Record Status</label>
+            <select
+              id="record_status"
+              v-model="formData.record_status"
+              class="block w-full px-4 py-3 border-2 border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+            >
+              <option value="COMPLETE">COMPLETE</option>
+              <option value="MINIMUM">MINIMUM</option>
+              <option value="REFERENCED">REFERENCED</option>
+            </select>
+            <p class="mt-2 text-xs text-gray-500">METS completion level (default: COMPLETE)</p>
           </div>
         </div>
       </div>
 
-      <!-- Step 4: Dates and Context -->
+      <!-- Step 4: Review & Submit -->
       <div v-if="currentStep === 3" class="card-body">
-        <h3 class="text-lg font-medium text-gray-900 mb-6">Dates and Context</h3>
-        
-        <div class="space-y-6">
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <label for="date_from" class="form-label">Date From</label>
-              <input
-                type="date"
-                id="date_from"
-                v-model="formData.date_from"
-                class="form-input"
-              />
-            </div>
-
-            <div>
-              <label for="date_to" class="form-label">Date To</label>
-              <input
-                type="date"
-                id="date_to"
-                v-model="formData.date_to"
-                class="form-input"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <label for="period" class="form-label">Historical Period</label>
-              <input
-                type="text"
-                id="period"
-                v-model="formData.period"
-                class="form-input"
-                placeholder="e.g., Renaissance, 20th Century"
-              />
-            </div>
-
-            <div>
-              <label for="location" class="form-label">Location</label>
-              <input
-                type="text"
-                id="location"
-                v-model="formData.location"
-                class="form-input"
-                placeholder="e.g., Modena, Italy"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <label for="language" class="form-label">Language</label>
-              <select
-                id="language"
-                v-model="formData.language"
-                class="form-input"
-              >
-                <option value="">Select language</option>
-                <option value="it">Italian</option>
-                <option value="en">English</option>
-                <option value="fr">French</option>
-                <option value="de">German</option>
-                <option value="es">Spanish</option>
-                <option value="la">Latin</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="subjects" class="form-label">Subjects/Keywords</label>
-              <input
-                type="text"
-                id="subjects"
-                v-model="formData.subjects"
-                class="form-input"
-                placeholder="e.g., architecture, portrait, landscape"
-              />
-              <p class="form-help">Separate multiple subjects with commas</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Step 5: Review and Submit -->
-      <div v-if="currentStep === 4" class="card-body">
         <h3 class="text-lg font-medium text-gray-900 mb-6">Review and Submit</h3>
         
         <!-- Files Summary -->
@@ -487,6 +736,91 @@
             <div v-for="file in selectedFiles" :key="file.name" class="flex items-center justify-between text-sm">
               <span class="text-gray-900">{{ file.name }}</span>
               <span class="text-gray-500">{{ formatFileSize(file.size) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- METS ECO-MiC Validation Section -->
+        <div class="mb-6 p-4 bg-green-50 rounded-lg border border-green-200">
+          <h4 class="text-sm font-medium text-green-900 mb-3">🔍 Validazione METS ECO-MiC</h4>
+          <p class="text-sm text-green-700 mb-4">
+            Verifica che i metadati siano conformi allo standard METS ECO-MiC 1.1 prima di completare l'upload.
+          </p>
+          
+          <div v-if="!uploading" class="space-y-3">
+            <!-- Debug info -->
+            <div class="text-xs text-gray-500 mb-2">
+              Debug: Step {{ currentStep }}, Uploading: {{ uploading }}, ValidatingMets: {{ validatingMets }}
+            </div>
+            
+            <!-- Validation button -->
+            <button
+              @click="validateMetsXml"
+              :disabled="validatingMets || uploading"
+              class="inline-flex items-center px-4 py-2 border border-green-300 text-sm font-medium rounded-md text-green-800 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+              <svg v-if="!validatingMets" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <svg v-else class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              {{ validatingMets ? 'Validazione in corso...' : 'Verifica METS ECO-MiC' }}
+            </button>
+
+            <!-- Validation results -->
+            <div v-if="metsValidationResult" class="mt-3">
+              <!-- Success result -->
+              <div v-if="metsValidationResult.valid" class="p-3 bg-green-100 rounded-lg border border-green-200">
+                <div class="flex items-start">
+                  <svg class="w-5 h-5 text-green-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p class="text-sm font-medium text-green-800">{{ metsValidationResult.summary }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Error result -->
+              <div v-else class="p-3 bg-red-100 rounded-lg border border-red-200">
+                <div class="flex items-start">
+                  <svg class="w-5 h-5 text-red-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium text-red-800 mb-2">{{ metsValidationResult.summary }}</p>
+                    
+                    <!-- Error details -->
+                    <div v-if="metsValidationResult.errors.length > 0" class="space-y-2">
+                      <p class="text-xs text-red-700 font-medium">Dettagli errori:</p>
+                      <div class="max-h-32 overflow-y-auto space-y-1">
+                        <div v-for="(error, index) in metsValidationResult.errors" :key="index" 
+                             class="text-xs text-red-700 bg-red-50 p-2 rounded border">
+                          <p><strong>Tipo:</strong> {{ error.type }}</p>
+                          <p><strong>Descrizione:</strong> {{ error.description }}</p>
+                          <p v-if="error.location !== 'N/A'"><strong>Posizione:</strong> {{ error.location }}</p>
+                          <p v-if="error.tag !== 'N/A'"><strong>Tag:</strong> {{ error.tag }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Validation error -->
+            <div v-if="metsValidationError" class="p-3 bg-red-100 rounded-lg border border-red-200">
+              <div class="flex items-start">
+                <svg class="w-5 h-5 text-red-600 mt-0.5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p class="text-sm font-medium text-red-800">Errore durante la validazione</p>
+                  <p class="text-xs text-red-700 mt-1">{{ metsValidationError }}</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -574,15 +908,15 @@
       </div>
 
       <!-- Navigation Buttons -->
-      <div class="card-footer flex justify-between">
+      <div class="p-6 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
         <button
           v-if="currentStep > 0"
           @click="previousStep"
           :disabled="uploading"
-          class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          class="inline-flex items-center px-6 py-3 border-2 border-gray-300 text-base font-semibold rounded-xl text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-4 focus:ring-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow"
         >
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
           </svg>
           Previous
         </button>
@@ -592,7 +926,7 @@
           <button
             @click="$emit('cancel')"
             :disabled="uploading"
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            class="inline-flex items-center px-6 py-3 border-2 border-transparent text-base font-semibold rounded-xl text-gray-700 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-4 focus:ring-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow"
           >
             Cancel
           </button>
@@ -601,11 +935,11 @@
             v-if="currentStep < steps.length - 1"
             @click="nextStep"
             :disabled="!canProceedToNextStep || uploading"
-            class="inline-flex items-center px-4 py-2 border border-blue-600 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            class="inline-flex items-center px-8 py-3 border-2 border-transparent text-base font-bold rounded-xl text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
           >
-            Next
-            <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            Next Step
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
             </svg>
           </button>
 
@@ -613,13 +947,13 @@
             v-else
             @click="submitForm"
             :disabled="!canSubmit || uploading"
-            class="inline-flex items-center px-4 py-2 border border-green-600 text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            class="inline-flex items-center px-8 py-3 border-2 border-transparent text-base font-bold rounded-xl text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-4 focus:ring-green-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
           >
-            <svg v-if="uploading" class="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">
+            <svg v-if="uploading" class="animate-spin -ml-1 mr-3 h-5 w-5" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            {{ uploading ? 'Uploading...' : 'Upload Document' }}
+            {{ uploading ? 'Uploading...' : 'Create Document' }}
           </button>
         </div>
       </div>
@@ -669,12 +1003,16 @@ export default {
     const metadataError = ref('')
     const importedFieldsCount = ref(0)
 
+    // METS validation state
+    const validatingMets = ref(false)
+    const metsValidationResult = ref(null)
+    const metsValidationError = ref('')
+
     // Steps configuration
     const steps = [
-      { id: 'upload', name: 'Upload Files' },
-      { id: 'basic', name: 'Basic Info' },
-      { id: 'archive', name: 'Archive Info' },
-      { id: 'context', name: 'Dates & Context' },
+      { id: 'upload-basic', name: 'Upload & Basic Info' },
+      { id: 'archive-context', name: 'Archive & Context' },
+      { id: 'ecomic', name: 'ECO-MiC Metadata' },
       { id: 'review', name: 'Review & Submit' }
     ]
 
@@ -682,6 +1020,7 @@ export default {
     const formData = reactive({
       logical_id: '',
       conservative_id: '',
+      conservative_id_authority: '',
       title: '',
       description: '',
       archive_name: '',
@@ -689,7 +1028,6 @@ export default {
       fund_name: '',
       series_name: '',
       folder_number: '',
-      conservative_id_authority: '',
       document_type: '',
       total_pages: null,
       date_from: '',
@@ -697,7 +1035,26 @@ export default {
       period: '',
       location: '',
       language: '',
-      subjects: ''
+      subjects: '',
+      // ECO-MiC specific fields
+      type_of_resource: '',
+      producer_name: '',
+      producer_type: 'corporate',
+      producer_role: '',
+      creator_name: '',
+      creator_type: 'personal',
+      creator_role: '',
+      rights_category: '',
+      rights_holder: '',
+      rights_constraint: '',
+      license_url: '',
+      rights_statement: '',
+      physical_form: '',
+      extent_description: '',
+      image_producer: '',
+      scanner_manufacturer: '',
+      scanner_model: '',
+      record_status: 'COMPLETE'
     })
 
     // Computed properties
@@ -749,13 +1106,25 @@ export default {
 
     const addFiles = (files) => {
       // Filter for supported file types
-      const supportedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/tiff', 'application/pdf']
-      const validFiles = files.filter(file => 
-        supportedTypes.includes(file.type) && file.size <= 50 * 1024 * 1024 // 50MB limit
-      )
+      const supportedTypes = [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/tiff',
+        'image/x-adobe-dng',  // DNG format
+        'image/dng',           // DNG alternate MIME type
+        'application/pdf'
+      ]
+
+      // Check file types and sizes (DNG files can be up to 80GB, others 50MB)
+      const validFiles = files.filter(file => {
+        const isDNG = file.type === 'image/x-adobe-dng' || file.type === 'image/dng' || file.name.toLowerCase().endsWith('.dng')
+        const maxSize = isDNG ? 80 * 1024 * 1024 * 1024 : 50 * 1024 * 1024  // 80GB for DNG, 50MB for others
+        return (supportedTypes.includes(file.type) || isDNG) && file.size <= maxSize
+      })
 
       if (validFiles.length !== files.length) {
-        error.value = 'Some files were skipped. Only JPEG, PNG, TIFF, and PDF files under 50MB are supported.'
+        error.value = 'Some files were skipped. Only JPEG, PNG, TIFF, DNG, and PDF files are supported (DNG up to 80GB, others up to 50MB).'
       } else {
         error.value = ''
       }
@@ -1226,6 +1595,72 @@ export default {
       }
     }
 
+    const validateMetsXml = async () => {
+      validatingMets.value = true
+      metsValidationResult.value = null
+      metsValidationError.value = ''
+
+      try {
+        // Prepare form data for validation
+        const validationData = {
+          logical_id: formData.logical_id,
+          title: formData.title,
+          description: formData.description,
+          conservative_id: formData.conservative_id,
+          conservative_id_authority: formData.conservative_id_authority,
+          archive_name: formData.archive_name,
+          archive_contact: formData.archive_contact,
+          license_url: formData.license_url,
+          rights_statement: formData.rights_statement,
+          image_producer: formData.image_producer,
+          scanner_manufacturer: formData.scanner_manufacturer,
+          scanner_model: formData.scanner_model,
+          document_type: formData.document_type,
+          total_pages: formData.total_pages,
+          date_from: formData.date_from,
+          date_to: formData.date_to,
+          period: formData.period,
+          location: formData.location,
+          language: formData.language,
+          subjects: formData.subjects,
+          fund_name: formData.fund_name,
+          series_name: formData.series_name,
+          folder_number: formData.folder_number
+        }
+
+        // Remove null/undefined values
+        Object.keys(validationData).forEach(key => {
+          if (validationData[key] === null || validationData[key] === undefined || validationData[key] === '') {
+            delete validationData[key]
+          }
+        })
+
+        // Call validation endpoint
+        const validationResponse = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/documents/validate-mets-from-data`,
+          validationData,
+          {
+            headers: {
+              'Authorization': `Bearer ${authStore.token}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        )
+
+        metsValidationResult.value = validationResponse.data
+
+      } catch (err) {
+        console.error('METS validation error:', err)
+        if (err.response?.data?.detail) {
+          metsValidationError.value = err.response.data.detail
+        } else {
+          metsValidationError.value = 'Errore durante la validazione METS ECO-MiC. Riprova più tardi.'
+        }
+      } finally {
+        validatingMets.value = false
+      }
+    }
+
     const submitForm = async () => {
       if (!canSubmit.value) {
         error.value = 'Please complete all required fields and select at least one file.'
@@ -1327,6 +1762,11 @@ export default {
       metadataError,
       importedFieldsCount,
       
+      // METS validation state
+      validatingMets,
+      metsValidationResult,
+      metsValidationError,
+      
       // Configuration
       steps,
       
@@ -1352,6 +1792,9 @@ export default {
       triggerMetadataFileInput,
       handleMetadataFileSelect,
       clearMetadataFile,
+      
+      // METS validation methods
+      validateMetsXml,
       
       submitForm
     }

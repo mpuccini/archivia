@@ -11,3 +11,10 @@ aiofiles==23.2.0
 python-magic==0.4.27
 pydantic-settings==2.0.3
 email-validator==2.1.0
+httpx==0.25.2
+defusedxml==0.7.1  # Available for parsing user-provided XML if needed
+numpy<2.0.0,>=1.21.0  # Pin numpy < 2.0 for rawpy compatibility
+Pillow==10.1.0  # Image processing for thumbnails
+rawpy==0.19.0  # RAW image processing (DNG support)
+imageio==2.33.0  # Image I/O for rawpy
+exifread==3.0.0  # Comprehensive EXIF/DNG metadata extraction

@@ -27,10 +27,13 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://archivia:archivia123@db:5432/archivia
-      SECRET_KEY: your-secret-key-here
+      SECRET_KEY: ${SECRET_KEY:-please-generate-a-secure-secret-key}
       MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: archivia
       MINIO_SECRET_KEY: archivia123
+      MINIO_BUCKET_NAME: archivia-files
+      MINIO_SECURE: "false"
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:8080
     depends_on:
       db:
         condition: service_healthy

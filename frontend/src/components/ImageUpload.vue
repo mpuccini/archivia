@@ -84,12 +84,12 @@
               <input
                 id="single-image-upload"
                 type="file"
-                accept=".jpg,.jpeg,.png,.tiff,.tif,.pdf"
+                accept=".jpg,.jpeg,.png,.tiff,.tif,.dng,.pdf"
                 @change="handleSingleFileSelect"
                 class="sr-only"
               />
             </label>
-            <p class="text-xs text-gray-500 mt-2">Images: JPG, PNG, TIFF, PDF up to 50MB</p>
+            <p class="text-xs text-gray-500 mt-2">Images: JPG, PNG, TIFF, DNG, PDF (DNG up to 80GB, others up to 50MB)</p>
           </div>
         </div>
 
@@ -337,10 +337,10 @@ export default {
     }
 
     const isValidImageFile = (file) => {
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/tiff', 'application/pdf']
-      const validExtensions = ['.jpg', '.jpeg', '.png', '.tiff', '.tif', '.pdf']
-      
-      return validTypes.includes(file.type) || 
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/tiff', 'image/x-adobe-dng', 'image/dng', 'application/pdf']
+      const validExtensions = ['.jpg', '.jpeg', '.png', '.tiff', '.tif', '.dng', '.pdf']
+
+      return validTypes.includes(file.type) ||
              validExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
     }
 
@@ -377,12 +377,17 @@ export default {
 
     const handleSingleFile = (file) => {
       if (!isValidImageFile(file)) {
-        alert('Please select a valid image file (JPG, PNG, TIFF, PDF)')
+        alert('Please select a valid image file (JPG, PNG, TIFF, DNG, PDF)')
         return
       }
-      
-      if (file.size > 50 * 1024 * 1024) {
-        alert('File size must be less than 50MB')
+
+      // Check file size (DNG files can be up to 80GB, others 50MB)
+      const isDNG = file.type === 'image/x-adobe-dng' || file.type === 'image/dng' || file.name.toLowerCase().endsWith('.dng')
+      const maxSize = isDNG ? 80 * 1024 * 1024 * 1024 : 50 * 1024 * 1024
+
+      if (file.size > maxSize) {
+        const maxSizeLabel = isDNG ? '80GB' : '50MB'
+        alert(`File size must be less than ${maxSizeLabel}`)
         return
       }
 
@@ -406,7 +411,10 @@ export default {
           console.warn(`Skipping invalid file: ${file.name}`)
           return false
         }
-        if (file.size > 50 * 1024 * 1024) {
+        // Check file size (DNG files can be up to 80GB, others 50MB)
+        const isDNG = file.type === 'image/x-adobe-dng' || file.type === 'image/dng' || file.name.toLowerCase().endsWith('.dng')
+        const maxSize = isDNG ? 80 * 1024 * 1024 * 1024 : 50 * 1024 * 1024
+        if (file.size > maxSize) {
           console.warn(`Skipping large file: ${file.name}`)
           return false
         }

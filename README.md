@@ -26,8 +26,9 @@ A modern digital document archiving system built with Vue.js frontend and FastAP
 
 2. **Access the application**:
    - Frontend: [http://localhost:3000](http://localhost:3000)
-   - Backend API: [http://localhost:8000](http://localhost:3000)
-   - MinIO Console: [http://localhost:9001](http://localhost:3000)
+   - Backend API: [http://localhost:8000](http://localhost:8000)
+   - API Documentation: [http://localhost:8000/docs](http://localhost:8000/docs)
+   - MinIO Console: [http://localhost:9001](http://localhost:9001)
 
 3. **Stop all services**:
    ```bash
@@ -204,12 +205,57 @@ The system uses the following environment variables:
 - `SECRET_KEY`: JWT secret key for authentication
 - `MINIO_*`: MinIO configuration
 
-### Project Structure
+## Features
+
+### Document Management
+- Upload and manage digital documents with rich metadata
+- Multi-step document upload wizard with guided metadata entry
+- Support for batch document import via Excel/CSV
+- METS ECO-MiC 1.1 compliant XML generation and export
+- Support for large files including DNG (Digital Negative) RAW files up to 80GB
+
+### METS ECO-MiC 1.1 Standard
+- Complete implementation of Italian METS ECO-MiC 1.1 archival standard
+- Real-time validation against ECO-MiC 1.1 via Cineca API
+- Integrated validation during document upload workflow
+- Detailed error reporting with line numbers and tag references
+- Per-file technical metadata (MIX standard)
+- Rights metadata (METSRIGHTS schema)
+
+### File Handling
+- **Chunked uploads** for files up to 80GB (DNG camera RAW files)
+- **Streaming downloads** for memory-efficient file delivery
+- **Automatic thumbnail generation** for DNG/RAW files
+- Multiple image formats: TIFF, JPEG, PNG, DNG
+- File type validation via magic number verification
+- MD5 checksums for data integrity
+
+### Storage & Export
+- MinIO object storage for scalable file management
+- Multiple export formats (CSV, METS XML, ZIP archives)
+- Batch operations for multiple documents
+- Full document archives with metadata and files
+- Memory-optimized ZIP creation (handles 100+ GB archives)
+
+### User Management
+- Secure JWT-based authentication
+- User-specific document access control
+- Admin user creation via CLI script
+
+## Project Structure
 
 ```
 archivia/
-├── docker-compose.yml          # Service orchestration (modern syntax)
+├── docker-compose.yml          # Service orchestration
 ├── README.md                   # This file
+├── CLAUDE.md                   # Project instructions for Claude Code
+├── docs/                       # Comprehensive documentation
+│   ├── deployment/            # Deployment guides
+│   ├── features/              # Feature documentation
+│   ├── history/               # Historical records
+│   ├── implementation/        # Implementation guides
+│   ├── security/              # Security best practices
+│   └── testing/               # Testing procedures
 ├── frontend/                   # Vue.js frontend
 │   ├── Dockerfile             # Frontend container
 │   ├── package.json           # Node.js dependencies
@@ -221,3 +267,41 @@ archivia/
     ├── main.py               # Application entry point
     └── app/                  # Application modules
 ```
+
+## Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+### For Users
+- **[docs/features/METADATA_IMPORT.md](docs/features/METADATA_IMPORT.md)** - Batch metadata import guide
+- **[docs/testing/TESTING_GUIDE.md](docs/testing/TESTING_GUIDE.md)** - Testing procedures
+
+### For Developers
+- **[CLAUDE.md](CLAUDE.md)** - Complete development guide and project overview
+- **[docs/implementation/METS_ECOMIC_IMPLEMENTATION.md](docs/implementation/METS_ECOMIC_IMPLEMENTATION.md)** - METS ECO-MiC 1.1 implementation details
+- **[docs/implementation/PERFORMANCE_OPTIMIZATIONS.md](docs/implementation/PERFORMANCE_OPTIMIZATIONS.md)** - Large file handling and performance tuning
+
+### For DevOps
+- **[docs/deployment/DOCKER_DEPLOYMENT.md](docs/deployment/DOCKER_DEPLOYMENT.md)** - Deployment guide and troubleshooting
+- **[docs/security/SECURITY_RECOMMENDATIONS.md](docs/security/SECURITY_RECOMMENDATIONS.md)** - Security best practices
+
+### Historical Reference
+- **[docs/history/SECURITY_FIXES_HISTORY.md](docs/history/SECURITY_FIXES_HISTORY.md)** - Security fixes and improvements log
+
+## Contributing
+
+This project follows:
+- **Security-first approach** - All code changes undergo security review
+- **METS ECO-MiC 1.1 compliance** - Strict adherence to Italian archival standards
+- **Performance optimization** - Designed to handle files up to 80GB efficiently
+
+## License
+
+[Add your license information here]
+
+## Support
+
+For issues or questions:
+- Check the [documentation](docs/)
+- Review [CLAUDE.md](CLAUDE.md) for development guidance
+- Consult the [Testing Guide](docs/testing/TESTING_GUIDE.md) for validation procedures

@@ -35,7 +35,7 @@ async def initiate_upload(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error initiating upload: {e}")
+        logger.error(f"Error initiating upload: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error initiating upload")
 
 
@@ -54,7 +54,7 @@ async def upload_chunk(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error uploading chunk: {e}")
+        logger.error(f"Error uploading chunk: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error uploading chunk")
 
 
@@ -72,7 +72,7 @@ async def complete_upload(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error completing upload: {e}")
+        logger.error(f"Error completing upload: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error completing upload")
 
 
@@ -90,7 +90,7 @@ async def upload_single_file(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error uploading file: {e}")
+        logger.error(f"Error uploading file: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error uploading file")
 
 
@@ -106,7 +106,7 @@ async def list_files(
         files = file_service.get_user_files(db, current_user.id, skip, limit)
         return [FileResponse.model_validate(file) for file in files]
     except Exception as e:
-        logger.error(f"Error listing files: {e}")
+        logger.error(f"Error listing files: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error listing files")
 
 
@@ -123,7 +123,7 @@ async def download_file(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error generating download URL: {e}")
+        logger.error(f"Error generating download URL: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error generating download URL")
 
 
@@ -139,7 +139,7 @@ async def stream_file(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error streaming file: {e}")
+        logger.error(f"Error streaming file: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error streaming file")
 
 
@@ -163,7 +163,7 @@ async def get_file(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting file: {e}")
+        logger.error(f"Error getting file: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error getting file")
 
 
@@ -180,5 +180,5 @@ async def delete_file(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error deleting file: {e}")
+        logger.error(f"Error deleting file: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error deleting file")

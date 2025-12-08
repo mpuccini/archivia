@@ -38,25 +38,12 @@ app.include_router(documents_router, prefix="/api/documents", tags=["documents"]
 async def startup_event():
     """Initialize the application"""
     logger.info("Starting Archivia API v2.0.0...")
-    
+
     # Create database tables
     create_tables()
-    
-    # Create admin user if it doesn't exist
-    auth_service = AuthService()
-    db = next(get_db())
-    try:
-        admin_user = auth_service.get_user_by_username(db, "admin")
-        if not admin_user:
-            admin_data = UserCreate(username="admin", password="admin123")
-            auth_service.create_user(db, admin_data)
-            logger.info("Admin user created: admin/admin123")
-        else:
-            logger.info("Admin user already exists")
-    finally:
-        db.close()
-    
+
     logger.info("Archivia API v2.0.0 started successfully!")
+    logger.info("To create an admin user, use the /api/auth/register endpoint or run the user creation script")
 
 
 @app.get("/")

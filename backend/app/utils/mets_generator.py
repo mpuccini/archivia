@@ -3,6 +3,7 @@ METS XML Generator
 Generates METS (Metadata Encoding and Transmission Standard) XML from database records
 """
 
+import html
 import xml.etree.ElementTree as ET
 from app.models.document import Document
 

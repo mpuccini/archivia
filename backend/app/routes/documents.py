@@ -10,6 +10,8 @@ from app.schemas.document import (
     DocumentCreate, DocumentUpdate, DocumentDetail, DocumentListItem, DocumentUpload
 )
 from app.services.document import DocumentService
+from app.services.mets_validation import METSValidationService
+from app.utils.mets_generator_ecomic import METSEcoMicGenerator
 from app.routes.auth import get_current_user
 
 router = APIRouter()
@@ -38,6 +40,44 @@ class BatchImageUploadResult(BaseModel):
     success: List[dict]
     errors: List[dict]
     created_documents: List[dict]
+
+
+class METSValidationRequest(BaseModel):
+    document_id: int
+
+
+class METSValidationFromDataRequest(BaseModel):
+    logical_id: str
+    title: str = None
+    description: str = None
+    conservative_id: str = None
+    conservative_id_authority: str = None
+    archive_name: str = None
+    archive_contact: str = None
+    license_url: str = None
+    rights_statement: str = None
+    image_producer: str = None
+    scanner_manufacturer: str = None
+    scanner_model: str = None
+    document_type: str = None
+    total_pages: int = None
+    # Additional METS fields
+    date_from: str = None
+    date_to: str = None
+    period: str = None
+    location: str = None
+    language: str = None
+    subjects: str = None
+    fund_name: str = None
+    series_name: str = None
+    folder_number: str = None
+
+
+class METSValidationResult(BaseModel):
+    valid: bool
+    response: dict
+    errors: List[dict]
+    summary: str
 
 
 @router.post("/", response_model=DocumentDetail)
@@ -168,8 +208,13 @@ async def delete_documents_batch(
                 deleted_count += 1
             else:
                 errors.append(f"Document {document_id} not found")
+        except HTTPException:
+            raise  # Re-raise HTTP exceptions (404, 403, etc.)
         except Exception as e:
-            errors.append(f"Error deleting document {document_id}: {str(e)}")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error deleting document {document_id}: {str(e)}", exc_info=True)
+            errors.append(f"Error deleting document {document_id}")
     
     return {
         "message": f"Successfully deleted {deleted_count} documents",
@@ -303,3 +348,88 @@ async def batch_upload_images(
     """Batch upload images, matching by filename to logical_id"""
     service = DocumentService(db)
     return await service.batch_upload_images(files, current_user.id)
+
+
+@router.post("/validate-mets", response_model=METSValidationResult)
+async def validate_mets_xml(
+    request: METSValidationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Validate METS XML for a document against ECO-MiC 1.1 standard"""
+    document_service = DocumentService(db)
+    validation_service = METSValidationService()
+    
+    # Get document to ensure user owns it
+    document = document_service.get_document(request.document_id, current_user.id)
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    # Generate METS XML for the document
+    mets_xml = document_service.generate_mets_xml_for_validation(request.document_id, current_user.id)
+    
+    # Validate the METS XML
+    validation_result = await validation_service.validate_mets_xml(
+        mets_xml, 
+        f"{document.logical_id}_mets.xml"
+    )
+    
+    return validation_result
+
+
+@router.post("/validate-mets-from-data", response_model=METSValidationResult)
+async def validate_mets_xml_from_data(
+    request: METSValidationFromDataRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """Validate METS XML generated from form data against ECO-MiC 1.1 standard"""
+    from app.models.document import Document
+    from datetime import datetime
+
+    validation_service = METSValidationService()
+    mets_generator = METSEcoMicGenerator()
+
+    # Create a temporary Document object from form data for METS generation
+    now = datetime.now()
+    temp_doc = Document(
+        id=0,
+        logical_id=request.logical_id,
+        title=request.title,
+        description=request.description,
+        conservative_id=request.conservative_id,
+        conservative_id_authority=request.conservative_id_authority,
+        archive_name=request.archive_name,
+        archive_contact=request.archive_contact,
+        license_url=request.license_url,
+        rights_statement=request.rights_statement,
+        image_producer=request.image_producer,
+        scanner_manufacturer=request.scanner_manufacturer,
+        scanner_model=request.scanner_model,
+        document_type=request.document_type,
+        total_pages=request.total_pages,
+        date_from=request.date_from,
+        date_to=request.date_to,
+        period=request.period,
+        location=request.location,
+        language=request.language,
+        owner_id=current_user.id,
+        created_at=now,
+        updated_at=now,
+        document_files=[]  # No files for validation-only
+    )
+
+    # Generate METS XML using ECO-MiC 1.1 generator
+    mets_xml = mets_generator.generate_mets_xml(temp_doc)
+
+    # DEBUG: Save generated XML to temp file for inspection
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Generated METS XML (first 1000 chars): {mets_xml[:1000]}")
+
+    # Validate the METS XML
+    validation_result = await validation_service.validate_mets_xml(
+        mets_xml,
+        f"{request.logical_id}_mets.xml"
+    )
+
+    return validation_result

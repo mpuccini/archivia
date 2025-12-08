@@ -127,16 +127,18 @@ class FileService:
             upload_session["upload_id"],
             chunk_number
         )
-        
+
+        # Get chunk size without reading entire chunk into memory
+        await chunk_data.seek(0, 2)  # Seek to end
+        chunk_size = chunk_data.tell()
+        await chunk_data.seek(0)  # Reset to beginning
+
         # Create chunk record
         chunk = FileChunk(
             file_id=file_id,
             chunk_number=chunk_number,
-            chunk_size=len(await chunk_data.read())
+            chunk_size=chunk_size
         )
-        
-        # Reset file pointer
-        await chunk_data.seek(0)
         
         db.add(chunk)
         db.commit()
@@ -217,12 +219,18 @@ class FileService:
             raise HTTPException(status_code=400, detail="Use multipart upload for this file")
         
         try:
-            # Calculate file hash first
+            # Calculate file hash using chunked reading to avoid loading entire file into memory
             await file_data.seek(0)
             file_hash = hashlib.sha256()
-            file_content = await file_data.read()
-            file_hash.update(file_content)
-            
+
+            # Read and hash in chunks (8KB at a time for memory efficiency)
+            chunk_size = settings.HASH_CHUNK_SIZE
+            while True:
+                chunk = await file_data.read(chunk_size)
+                if not chunk:
+                    break
+                file_hash.update(chunk)
+
             # Reset file position and upload to MinIO
             await file_data.seek(0)
             etag = await self.minio_service.upload_file(
@@ -262,36 +270,101 @@ class FileService:
         download_url = await self.minio_service.get_file_url(db_file.minio_object_name)
         return download_url
     
-    async def stream_file(self, db: Session, file_id: int, user_id: int):
-        """Stream file content directly"""
-        from fastapi.responses import StreamingResponse
-        import io
-        
+    async def stream_file(self, db: Session, file_id: int, user_id: int, thumbnail: bool = False):
+        """Stream file content directly using chunked streaming
+
+        Args:
+            db: Database session
+            file_id: File ID to stream
+            user_id: User ID for access control
+            thumbnail: If True, generate and return thumbnail for DNG files
+        """
+        from fastapi.responses import StreamingResponse, Response
+        from app.utils.thumbnail_generator import get_thumbnail_generator
+        import re
+
         # Get file record
         db_file = db.query(File).filter(
             File.id == file_id,
             File.owner_id == user_id
         ).first()
-        
+
         if not db_file:
             raise HTTPException(status_code=404, detail="File not found or not accessible")
-        
+
+        # Check if this is a DNG file that needs thumbnail generation
+        is_dng = self._is_dng_file(db_file.content_type, db_file.filename)
+
         # Get file content from MinIO
         try:
             file_data = self.minio_service.get_file(db_file.minio_object_name)
-            
-            # Create streaming response
+
+            # Generate thumbnail for DNG files (always for preview purposes)
+            if is_dng:
+                try:
+                    thumbnail_gen = get_thumbnail_generator()
+                    result = thumbnail_gen.generate_thumbnail(
+                        file_data,
+                        db_file.content_type,
+                        db_file.filename
+                    )
+
+                    if result:
+                        thumbnail_bytes, mime_type = result
+                        logger.info(f"Generated thumbnail for DNG file {file_id}")
+
+                        # Return thumbnail as response
+                        return Response(
+                            content=thumbnail_bytes,
+                            media_type=mime_type,
+                            headers={
+                                "Content-Disposition": f'inline; filename="thumb_{db_file.filename}.jpg"',
+                                "X-Original-Content-Type": db_file.content_type,
+                                "X-Thumbnail-Generated": "true"
+                            }
+                        )
+                    else:
+                        logger.warning(f"Failed to generate thumbnail for DNG file {file_id}, serving original")
+                        # Fall through to serve original file
+                        file_data = self.minio_service.get_file(db_file.minio_object_name)
+
+                except Exception as thumb_error:
+                    logger.error(f"Error generating DNG thumbnail: {thumb_error}", exc_info=True)
+                    # Fall through to serve original file
+                    file_data = self.minio_service.get_file(db_file.minio_object_name)
+
+            # Generator function to stream file in chunks (for non-DNG or if thumbnail failed)
+            def file_stream_generator():
+                chunk_size = settings.STREAMING_CHUNK_SIZE
+                while True:
+                    chunk = file_data.read(chunk_size)
+                    if not chunk:
+                        break
+                    yield chunk
+
+            # Sanitize filename for safety
+            safe_filename = re.sub(r'[^\w\-_\.]', '_', db_file.filename).strip('. ')
+
             return StreamingResponse(
-                io.BytesIO(file_data.read()),
+                file_stream_generator(),
                 media_type=db_file.content_type or 'application/octet-stream',
                 headers={
-                    "Content-Disposition": f"inline; filename={db_file.filename}",
+                    "Content-Disposition": f'inline; filename="{safe_filename}"',
                     "Content-Length": str(db_file.file_size)
                 }
             )
         except Exception as e:
-            logger.error(f"Error streaming file {file_id}: {e}")
+            logger.error(f"Error streaming file {file_id}: {e}", exc_info=True)
             raise HTTPException(status_code=500, detail="Error accessing file")
+
+    def _is_dng_file(self, content_type: str, filename: str) -> bool:
+        """Check if file is a DNG file"""
+        dng_mime_types = ['image/x-adobe-dng', 'image/dng', 'image/x-dng']
+        if content_type and content_type in dng_mime_types:
+            return True
+        if filename and filename.lower().endswith('.dng'):
+            return True
+        return False
     
     def get_user_files(self, db: Session, user_id: int, skip: int = 0, limit: int = 100) -> List[File]:
         """Get files for a user"""
@@ -332,25 +405,36 @@ class FileService:
         """
         Simple upload method for image files - handles the complete workflow
         """
-        # Read file content
-        content = await file.read()
-        
-        # Calculate file hash
-        file_hash = hashlib.sha256(content).hexdigest()
+        # Calculate file hash using chunked reading
+        await file.seek(0)
+        file_hash_obj = hashlib.sha256()
+        chunk_size = settings.HASH_CHUNK_SIZE
+
+        while True:
+            chunk = await file.read(chunk_size)
+            if not chunk:
+                break
+            file_hash_obj.update(chunk)
+
+        file_hash = file_hash_obj.hexdigest()
+        await file.seek(0)  # Reset for later use
         
         # Check if file already exists
         existing_file = self.db.query(File).filter(File.checksum == file_hash).first()
         if existing_file:
             return existing_file
-        
-        # Get file info
-        file_size = len(content)
+
+        # Get file size without loading into memory
+        await file.seek(0, 2)  # Seek to end
+        file_size = file.tell()
+        await file.seek(0)  # Reset to beginning
+
         mime_type = file.content_type or "application/octet-stream"
-        
-        # Upload to MinIO
+
+        # Upload to MinIO using file object directly (streaming)
         object_name = f"files/{user_id}/{file_hash}"
         self.minio_service.upload_object(
-            content,
+            file.file,  # Pass file object for streaming
             object_name,
             content_type=mime_type,
             length=file_size

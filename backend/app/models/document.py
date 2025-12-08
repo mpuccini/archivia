@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.models.base import Base
@@ -12,10 +13,13 @@ class Document(Base):
     
     # Basic identification
     logical_id = Column(String(255), nullable=False, unique=True)  # MODS identifier logicalId
-    conservative_id = Column(String(255), nullable=True)  # MODS identifier conservativeId  
-    conservative_id_authority = Column(String(100), nullable=True)  # ISIL
+    conservative_id = Column(String(255), nullable=True)  # MODS identifier conservativeId
+    conservative_id_authority = Column(String(100), nullable=True)  # ISIL (e.g., "IT-MO0172")
     title = Column(String(500), nullable=True)
     description = Column(Text, nullable=True)
+
+    # MODS typeOfResource (ECO-MiC required)
+    type_of_resource = Column(String(100), nullable=True)  # e.g., "risorsa manoscritta", "documento testuale"
     
     # Archive information
     archive_name = Column(String(255), nullable=True)  # e.g., "Archivio di stato di Modena"
@@ -33,10 +37,21 @@ class Document(Base):
     location = Column(String(255), nullable=True)  # Place/Location
     language = Column(String(10), nullable=True)  # Language code (e.g., "it", "en")
     subjects = Column(Text, nullable=True)  # Subjects/Keywords (comma-separated)
+
+    # Corporate and personal names (ECO-MiC)
+    producer_name = Column(String(255), nullable=True)  # Corporate/personal name who produced the document
+    producer_type = Column(String(20), nullable=True)  # "corporate" or "personal"
+    producer_role = Column(String(100), nullable=True)  # e.g., "producer", "author"
+    creator_name = Column(String(255), nullable=True)  # Creator/contributor name
+    creator_type = Column(String(20), nullable=True)  # "corporate" or "personal"
+    creator_role = Column(String(100), nullable=True)  # e.g., "creator", "contributor"
     
-    # Rights information
-    license_url = Column(String(500), nullable=True)  # DCT license
-    rights_statement = Column(String(500), nullable=True)  # DCT rights
+    # Rights information (ECO-MiC metsrights)
+    license_url = Column(String(500), nullable=True)  # DCT license URL
+    rights_statement = Column(String(500), nullable=True)  # DCT rights statement
+    rights_category = Column(String(50), nullable=True)  # e.g., "COPYRIGHTED", "PUBLIC DOMAIN", "CONTRACTUAL"
+    rights_holder = Column(String(255), nullable=True)  # Rights holder name
+    rights_constraint = Column(String(100), nullable=True)  # e.g., "NoC-OKLR", "InC"
     
     # Technical metadata (from MIX)
     image_producer = Column(String(255), nullable=True)  # e.g., "EDS Gamma"
@@ -44,12 +59,17 @@ class Document(Base):
     scanner_model = Column(String(500), nullable=True)  # Scanner model details
     
     # Physical structure
-    document_type = Column(String(100), nullable=True)  # e.g., "book", "manuscript"
+    document_type = Column(String(100), nullable=True)  # e.g., "book", "manuscript", "folder"
     total_pages = Column(Integer, nullable=True)
+    physical_form = Column(String(100), nullable=True)  # e.g., "documento testuale", "documento cartografico"
+    extent_description = Column(String(255), nullable=True)  # e.g., "c. 14 nel fascicolo", "1 volume"
     
     # Full METS XML storage
     mets_xml = Column(Text, nullable=True)  # Store complete METS XML
-    
+
+    # METS header information (ECO-MiC)
+    record_status = Column(String(20), nullable=True, default="COMPLETE")  # "COMPLETE", "MINIMUM", "REFERENCED"
+
     # System fields
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -74,15 +94,38 @@ class DocumentFile(Base):
     sequence_number = Column(Integer, nullable=True)  # ORDER attribute
     checksum_md5 = Column(String(32), nullable=True)
     
-    # Technical metadata specific to this file
+    # Technical metadata specific to this file (MIX)
     image_width = Column(Integer, nullable=True)
     image_height = Column(Integer, nullable=True)
     bits_per_sample = Column(String(50), nullable=True)  # e.g., "8,8,8"
     samples_per_pixel = Column(Integer, nullable=True)
     date_time_created = Column(DateTime, nullable=True)
-    
+
+    # Enhanced technical metadata (ECO-MiC)
+    compression_scheme = Column(String(50), nullable=True)  # e.g., "uncompressed", "JPEG"
+    color_space = Column(String(50), nullable=True)  # e.g., "sRGB", "RGB"
+    sampling_frequency_unit = Column(String(20), nullable=True)  # e.g., "in.", "cm"
+    x_sampling_frequency = Column(Integer, nullable=True)  # e.g., 300 for 300 DPI
+    y_sampling_frequency = Column(Integer, nullable=True)  # e.g., 300 for 300 DPI
+
+    # Additional MIX metadata fields
+    format_name = Column(String(100), nullable=True)  # e.g., "image/tiff", "image/dng"
+    byte_order = Column(String(20), nullable=True)  # e.g., "little endian", "big endian"
+    orientation = Column(String(50), nullable=True)  # e.g., "normal*", "rotate 90"
+    icc_profile_name = Column(String(255), nullable=True)  # e.g., "sRGB IEC61966-2.1"
+
+    # Scanner/Capture metadata
+    scanner_manufacturer = Column(String(255), nullable=True)  # e.g., "Nikon", "Canon"
+    scanner_model_name = Column(String(255), nullable=True)  # e.g., "Nikon D850"
+    scanning_software_name = Column(String(255), nullable=True)  # e.g., "Adobe Lightroom"
+    scanning_software_version = Column(String(100), nullable=True)
+
+    # Comprehensive metadata storage (JSONB) - stores ALL extracted metadata
+    # This includes DNG-specific tags, EXIF data, and any other metadata
+    raw_metadata = Column(JSONB, nullable=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     document = relationship("Document", back_populates="document_files")
     file = relationship("File")
