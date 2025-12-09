@@ -9,6 +9,7 @@ class DocumentFileSchema(BaseModel):
     id: int
     file_id: int
     file_use: Optional[str] = None
+    file_category: Optional[str] = None
     file_label: Optional[str] = None
     sequence_number: Optional[int] = None
     checksum_md5: Optional[str] = None

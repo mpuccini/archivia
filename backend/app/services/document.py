@@ -24,6 +24,7 @@ from app.services.minio import MinIOService
 from app.utils.mets_generator_ecomic import METSEcoMicGenerator
 from app.utils.file_validator import validate_file_type_and_size, validate_filename
 from app.utils.image_metadata import extract_image_metadata
+from app.utils.file_categorizer import FileCategorizer
 
 
 class DocumentService:
@@ -1111,3 +1112,188 @@ class DocumentService:
         # Generate METS XML using the existing generator
         mets_generator = METSEcoMicGenerator()
         return mets_generator.generate_mets_xml(document)
+
+    async def upload_folder_archive(
+        self,
+        zip_file: UploadFile,
+        logical_id: str,
+        title: str,
+        description: str,
+        conservative_id: str,
+        conservative_id_authority: str,
+        archive_name: str,
+        archive_contact: str,
+        document_type: str,
+        user_id: int
+    ) -> dict:
+        """
+        Upload a ZIP archive containing a structured folder with multiple files.
+        Automatically categorizes files based on ECO-MiC folder structure.
+
+        Args:
+            zip_file: ZIP archive containing document files
+            logical_id: Document logical identifier
+            title: Document title
+            description: Document description
+            conservative_id: Conservative identifier
+            conservative_id_authority: Authority for conservative ID
+            archive_name: Archive name
+            archive_contact: Archive contact
+            document_type: Type of document
+            user_id: User ID
+
+        Returns:
+            Dict with upload status, document_id, and categorized files info
+        """
+
+        try:
+            # Validate ZIP file
+            if not zip_file.filename.endswith('.zip'):
+                raise HTTPException(status_code=400, detail="File must be a ZIP archive")
+
+            # Create document first
+            document_data = DocumentCreate(
+                logical_id=logical_id,
+                title=title,
+                description=description,
+                conservative_id=conservative_id,
+                conservative_id_authority=conservative_id_authority,
+                archive_name=archive_name,
+                archive_contact=archive_contact,
+                document_type=document_type
+            )
+
+            document = self.create_document(document_data, user_id)
+
+            # Create temp directory for extraction
+            with tempfile.TemporaryDirectory() as temp_dir:
+                # Save ZIP to temp file
+                zip_path = os.path.join(temp_dir, "upload.zip")
+                with open(zip_path, "wb") as f:
+                    content = await zip_file.read()
+                    f.write(content)
+
+                # Extract ZIP
+                with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                    zip_ref.extractall(temp_dir)
+
+                # Collect all files with their paths
+                file_list = []
+                for root, dirs, files in os.walk(temp_dir):
+                    for filename in files:
+                        if filename == "upload.zip":
+                            continue  # Skip the ZIP itself
+
+                        full_path = os.path.join(root, filename)
+                        # Get relative folder path for categorization
+                        rel_folder = os.path.relpath(root, temp_dir)
+
+                        file_list.append({
+                            'filename': filename,
+                            'full_path': full_path,
+                            'folder_path': rel_folder
+                        })
+
+                # Categorize files
+                categorizer = FileCategorizer()
+                categorized_files = {}
+                total_uploaded = 0
+
+                for file_info in file_list:
+                    filename = file_info['filename']
+                    full_path = file_info['full_path']
+                    folder_path = file_info['folder_path']
+
+                    # Categorize file
+                    category, confidence = categorizer.categorize_file(filename, folder_path)
+                    file_use = categorizer.get_file_use_from_category(category)
+
+                    try:
+                        # Upload file to MinIO
+                        with open(full_path, 'rb') as file_handle:
+                            # Create a file-like object with required attributes
+                            class FileWrapper:
+                                def __init__(self, file, filename):
+                                    self.file = file
+                                    self.filename = filename
+
+                                def read(self, size=-1):
+                                    return self.file.read(size)
+
+                                def seek(self, offset, whence=0):
+                                    return self.file.seek(offset, whence)
+
+                            wrapped_file = FileWrapper(file_handle, filename)
+
+                            # Get file size
+                            file_size = os.path.getsize(full_path)
+
+                            # Generate unique filename for MinIO
+                            minio_filename = f"{logical_id}_{filename}"
+                            object_name = await self.minio_service.upload_file(
+                                wrapped_file,
+                                minio_filename
+                            )
+
+                            # Create File record
+                            file_record = File(
+                                filename=filename,
+                                content_type=self._guess_content_type(filename),
+                                file_size=file_size,
+                                minio_object_name=object_name,
+                                uploaded_by_id=user_id
+                            )
+                            self.db.add(file_record)
+                            self.db.flush()
+
+                            # Create DocumentFile association
+                            doc_file = DocumentFile(
+                                document_id=document.id,
+                                file_id=file_record.id,
+                                file_use=file_use,
+                                file_category=category,
+                                sequence_number=total_uploaded + 1
+                            )
+                            self.db.add(doc_file)
+
+                            # Track for response
+                            if category not in categorized_files:
+                                categorized_files[category] = []
+
+                            categorized_files[category].append({
+                                'filename': filename,
+                                'category': category,
+                                'confidence': confidence,
+                                'file_use': file_use,
+                                'folder': folder_path
+                            })
+
+                            total_uploaded += 1
+
+                    except Exception as e:
+                        logger.error(f"Error uploading file {filename}: {str(e)}", exc_info=True)
+                        # Continue with other files
+
+                self.db.commit()
+
+                return {
+                    "success": True,
+                    "message": f"Successfully uploaded {total_uploaded} files",
+                    "document_id": document.id,
+                    "categorized_files": categorized_files,
+                    "total_files": total_uploaded
+                }
+
+        except HTTPException:
+            self.db.rollback()
+            raise
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error uploading folder archive: {str(e)}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Failed to upload folder: {str(e)}")
+
+    def _guess_content_type(self, filename: str) -> str:
+        """Guess content type from filename extension"""
+        import mimetypes
+        content_type, _ = mimetypes.guess_type(filename)
+        return content_type or 'application/octet-stream'

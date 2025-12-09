@@ -974,13 +974,31 @@
                 <!-- Files Tab -->
                 <div v-if="activeTab === 'files'" class="p-8">
                   <div v-if="document?.document_files && document.document_files.length > 0">
-                    <!-- Files Grid -->
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                      <div
-                        v-for="file in document.document_files"
-                        :key="file.file_id"
-                        class="bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-blue-400 transition-all duration-200 hover:shadow-lg"
-                      >
+                    <!-- Files Grouped by Category -->
+                    <div class="space-y-8">
+                      <div v-for="(files, category) in filesByCategory" :key="category">
+                        <div v-if="files.length > 0">
+                          <!-- Category Header -->
+                          <div class="mb-4 pb-2 border-b-2 border-gray-200">
+                            <div class="flex items-center gap-3">
+                              <span class="text-3xl">{{ getCategoryIcon(category) }}</span>
+                              <div>
+                                <h4 class="text-lg font-semibold text-gray-900">
+                                  {{ getCategoryLabel(category) }}
+                                  <span class="ml-2 text-sm font-normal text-gray-500">({{ files.length }})</span>
+                                </h4>
+                                <p class="text-xs text-gray-600">{{ getCategoryDescription(category) }}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Files Grid for this category -->
+                          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            <div
+                              v-for="file in files"
+                              :key="file.file_id"
+                              class="bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-blue-400 transition-all duration-200 hover:shadow-lg"
+                            >
                         <!-- Image Preview -->
                         <div
                           class="relative bg-gray-100 aspect-square overflow-hidden cursor-pointer group"
@@ -1094,6 +1112,10 @@
                               </svg>
                             </button>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                         </div>
                       </div>
                     </div>
@@ -1556,6 +1578,74 @@ export default {
     const imageFiles = computed(() => {
       return props.document?.document_files?.filter(file => isImageFile(file)) || []
     })
+
+    const filesByCategory = computed(() => {
+      const grouped = {
+        master: [],
+        normalized: [],
+        export_high: [],
+        export_low: [],
+        metadata: [],
+        icc: [],
+        logs: [],
+        other: []
+      }
+
+      if (props.document?.document_files) {
+        props.document.document_files.forEach(file => {
+          const category = file.file_category || 'other'
+          if (grouped[category]) {
+            grouped[category].push(file)
+          } else {
+            grouped.other.push(file)
+          }
+        })
+      }
+
+      return grouped
+    })
+
+    const getCategoryLabel = (category) => {
+      const labels = {
+        master: 'Preservation Master',
+        normalized: 'Normalized TIFF',
+        export_high: 'High-Quality Export',
+        export_low: 'Low-Quality Export',
+        metadata: 'Metadata',
+        icc: 'ICC Profiles',
+        logs: 'Logs',
+        other: 'Other'
+      }
+      return labels[category] || category
+    }
+
+    const getCategoryIcon = (category) => {
+      const icons = {
+        master: '🎞️',
+        normalized: '📸',
+        export_high: '🖼️',
+        export_low: '🏞️',
+        metadata: '📄',
+        icc: '🎨',
+        logs: '📝',
+        other: '📦'
+      }
+      return icons[category] || '📦'
+    }
+
+    const getCategoryDescription = (category) => {
+      const descriptions = {
+        master: 'RAW/DNG files for long-term preservation',
+        normalized: 'Standardized TIFF exports (Adobe RGB, 2400px)',
+        export_high: 'High-quality JPEG (300 DPI, ~2400px)',
+        export_low: 'Low-quality JPEG (150 DPI, ~1200px)',
+        metadata: 'XML, METS, and metadata files',
+        icc: 'Color profile files',
+        logs: 'Processing and capture logs',
+        other: 'Uncategorized files'
+      }
+      return descriptions[category] || ''
+    }
 
     // Methods
     const closeModal = () => {
@@ -2085,6 +2175,10 @@ export default {
 
       // Computed
       imageFiles,
+      filesByCategory,
+      getCategoryLabel,
+      getCategoryIcon,
+      getCategoryDescription,
 
       // Methods
       closeModal,

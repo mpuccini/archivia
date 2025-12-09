@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
@@ -40,6 +40,14 @@ class BatchImageUploadResult(BaseModel):
     success: List[dict]
     errors: List[dict]
     created_documents: List[dict]
+
+
+class FolderUploadResult(BaseModel):
+    success: bool
+    message: str
+    document_id: int = None
+    categorized_files: Dict[str, List[dict]] = None
+    total_files: int = 0
 
 
 class METSValidationRequest(BaseModel):
@@ -241,24 +249,24 @@ async def delete_document(
 
 @router.post("/export/csv")
 async def export_metadata_csv(
-    document_ids: List[int],
+    request: BatchDeleteRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Export metadata for multiple documents as CSV"""
     service = DocumentService(db)
-    return service.export_metadata_csv(document_ids, current_user.id)
+    return service.export_metadata_csv(request.document_ids, current_user.id)
 
 
 @router.post("/export/mets")
 async def export_multiple_mets_xml(
-    document_ids: List[int],
+    request: BatchDeleteRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Export METS XML for multiple documents as ZIP archive"""
     service = DocumentService(db)
-    return service.export_multiple_mets_xml(document_ids, current_user.id)
+    return service.export_multiple_mets_xml(request.document_ids, current_user.id)
 
 
 @router.get("/{document_id}/export/mets")
@@ -305,15 +313,15 @@ async def download_document_archive(
     return service.download_document_archive(document_id, current_user.id)
 
 
-@router.post("/download/batch")
+@router.post("/download/archives")
 async def batch_download_archives(
-    document_ids: List[int],
+    request: BatchDeleteRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Download multiple documents as archives in a single ZIP"""
     service = DocumentService(db)
-    return service.batch_download_archives(document_ids, current_user.id)
+    return service.batch_download_archives(request.document_ids, current_user.id)
 
 
 @router.post("/batch", response_model=BatchImportResult)
@@ -348,6 +356,39 @@ async def batch_upload_images(
     """Batch upload images, matching by filename to logical_id"""
     service = DocumentService(db)
     return await service.batch_upload_images(files, current_user.id)
+
+
+@router.post("/upload-folder", response_model=FolderUploadResult)
+async def upload_folder_archive(
+    zip_file: UploadFile = File(...),
+    logical_id: str = Form(...),
+    title: str = Form(None),
+    description: str = Form(None),
+    conservative_id: str = Form(None),
+    conservative_id_authority: str = Form(None),
+    archive_name: str = Form(None),
+    archive_contact: str = Form(None),
+    document_type: str = Form(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Upload a ZIP archive containing a structured folder with multiple files.
+    Automatically categorizes files based on ECO-MiC folder structure.
+    """
+    service = DocumentService(db)
+    return await service.upload_folder_archive(
+        zip_file=zip_file,
+        logical_id=logical_id,
+        title=title,
+        description=description,
+        conservative_id=conservative_id,
+        conservative_id_authority=conservative_id_authority,
+        archive_name=archive_name,
+        archive_contact=archive_contact,
+        document_type=document_type,
+        user_id=current_user.id
+    )
 
 
 @router.post("/validate-mets", response_model=METSValidationResult)

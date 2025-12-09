@@ -892,11 +892,11 @@ export default {
           responseType: 'blob'
         })
         
-        const blob = new Blob([response.data], { type: 'application/xml' })
+        const blob = new Blob([response.data], { type: 'application/zip' })
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
-        link.download = 'documents_mets.xml'
+        link.download = 'documents_mets.zip'
         link.click()
         window.URL.revokeObjectURL(url)
       } catch (err) {

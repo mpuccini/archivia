@@ -90,6 +90,7 @@ class DocumentFile(Base):
     
     # File-specific metadata from METS
     file_use = Column(String(50), nullable=True)  # e.g., "ARCHIVE", "HIGH"
+    file_category = Column(String(50), nullable=True)  # e.g., "master", "normalized", "export_high", "export_low", "metadata", "icc", "logs"
     file_label = Column(String(255), nullable=True)  # e.g., "Dorso", "Piatto anteriore"
     sequence_number = Column(Integer, nullable=True)  # ORDER attribute
     checksum_md5 = Column(String(32), nullable=True)
