@@ -5,47 +5,18 @@
       <p class="text-gray-600">Upload a complete document folder structure with automatic file categorization</p>
     </div>
 
-    <!-- Upload Type Selection -->
+    <!-- Upload Instructions -->
     <div class="mb-6">
-      <label class="block text-sm font-medium text-gray-700 mb-3">Upload Method</label>
-      <div class="grid grid-cols-2 gap-4">
-        <button
-          @click="uploadType = 'zip'"
-          type="button"
-          :class="[
-            'flex items-center justify-center px-4 py-3 border-2 rounded-lg transition-all',
-            uploadType === 'zip'
-              ? 'border-blue-500 bg-blue-50 text-blue-700'
-              : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-          ]"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-start">
+          <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <div class="text-left">
-            <div class="font-semibold">ZIP Archive</div>
-            <div class="text-xs">Upload compressed folder</div>
+          <div class="text-sm text-blue-800">
+            <p class="font-semibold mb-1">Upload ZIP Archive</p>
+            <p>Compress your ECO-MiC folder structure into a ZIP archive. The folder should contain standard ECO-MiC directories (TIF.Master, JPG300, JPG150, Metadata, ICC, Logs, etc.).</p>
           </div>
-        </button>
-
-        <button
-          @click="uploadType = 'folder'"
-          type="button"
-          :class="[
-            'flex items-center justify-center px-4 py-3 border-2 rounded-lg transition-all',
-            uploadType === 'folder'
-              ? 'border-blue-500 bg-blue-50 text-blue-700'
-              : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-          ]"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
-          </svg>
-          <div class="text-left">
-            <div class="font-semibold">Direct Folder</div>
-            <div class="text-xs">Select folder structure</div>
-          </div>
-        </button>
+        </div>
       </div>
     </div>
 
@@ -65,10 +36,7 @@
       <input
         ref="fileInput"
         type="file"
-        :accept="uploadType === 'zip' ? '.zip' : ''"
-        :webkitdirectory="uploadType === 'folder'"
-        :directory="uploadType === 'folder'"
-        :multiple="uploadType === 'folder'"
+        accept=".zip"
         @change="handleFileSelect"
         class="hidden"
       />
@@ -79,10 +47,10 @@
         </svg>
 
         <p class="text-lg font-medium text-gray-900 mb-1">
-          {{ uploadType === 'zip' ? 'Drop ZIP file here or click to browse' : 'Click to select folder' }}
+          Drop ZIP file here or click to browse
         </p>
         <p class="text-sm text-gray-500">
-          {{ uploadType === 'zip' ? 'Supports .zip archives up to 5GB' : 'Select a folder with ECO-MiC structure' }}
+          Supports .zip archives up to 5GB
         </p>
       </div>
     </div>
@@ -96,7 +64,7 @@
               <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
             </svg>
             <span class="font-semibold text-blue-900">
-              {{ uploadType === 'zip' ? 'ZIP Archive Selected' : `${selectedFiles.length} files selected` }}
+              ZIP Archive Selected
             </span>
           </div>
           <button
@@ -107,21 +75,9 @@
           </button>
         </div>
 
-        <div v-if="uploadType === 'zip'" class="text-sm text-blue-800">
+        <div class="text-sm text-blue-800">
           <p class="font-medium">{{ selectedFiles[0].name }}</p>
           <p class="text-xs text-blue-600 mt-1">{{ formatFileSize(selectedFiles[0].size) }}</p>
-        </div>
-
-        <div v-else class="max-h-48 overflow-y-auto">
-          <div class="text-xs text-blue-700 space-y-1">
-            <p class="font-semibold mb-2">Detected folder structure:</p>
-            <div v-for="folder in detectedFolders" :key="folder" class="flex items-center">
-              <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-              </svg>
-              {{ folder }}
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -335,7 +291,6 @@ export default {
   name: 'FolderUpload',
   emits: ['cancel', 'success'],
   setup(props, { emit }) {
-    const uploadType = ref('zip')
     const selectedFiles = ref([])
     const isDragging = ref(false)
     const fileInput = ref(null)
@@ -353,22 +308,6 @@ export default {
       archive_name: '',
       archive_contact: '',
       document_type: ''
-    })
-
-    const detectedFolders = computed(() => {
-      if (uploadType.value !== 'folder' || selectedFiles.value.length === 0) {
-        return []
-      }
-
-      const folders = new Set()
-      selectedFiles.value.forEach(file => {
-        const pathParts = file.webkitRelativePath.split('/')
-        if (pathParts.length > 1) {
-          // Get immediate parent folder
-          folders.add(pathParts[pathParts.length - 2])
-        }
-      })
-      return Array.from(folders).sort()
     })
 
     const canUpload = computed(() => {
@@ -392,15 +331,9 @@ export default {
     const handleDrop = (event) => {
       isDragging.value = false
       const files = Array.from(event.dataTransfer.files)
-
-      if (uploadType.value === 'zip') {
-        const zipFile = files.find(f => f.name.endsWith('.zip'))
-        if (zipFile) {
-          selectedFiles.value = [zipFile]
-          uploadResult.value = null
-        }
-      } else {
-        selectedFiles.value = files
+      const zipFile = files.find(f => f.name.endsWith('.zip'))
+      if (zipFile) {
+        selectedFiles.value = [zipFile]
         uploadResult.value = null
       }
     }
@@ -451,35 +384,9 @@ export default {
 
         const formDataToSend = new FormData()
 
-        if (uploadType.value === 'zip') {
-          // ZIP file upload
-          uploadStatus.value = 'Uploading ZIP archive...'
-          formDataToSend.append('zip_file', selectedFiles.value[0])
-        } else {
-          // Direct folder upload - create ZIP on the fly
-          uploadStatus.value = 'Compressing folder structure...'
-
-          // We need to create a ZIP file from the selected files
-          // Using JSZip library (we'll need to add this dependency)
-          const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default
-          const zip = new JSZip()
-
-          // Add all files to ZIP maintaining folder structure
-          selectedFiles.value.forEach(file => {
-            zip.file(file.webkitRelativePath, file)
-          })
-
-          uploadStatus.value = 'Generating ZIP archive...'
-          const zipBlob = await zip.generateAsync(
-            { type: 'blob' },
-            (metadata) => {
-              uploadProgress.value = Math.round(metadata.percent / 2) // 0-50% for ZIP generation
-            }
-          )
-
-          formDataToSend.append('zip_file', zipBlob, 'upload.zip')
-          uploadProgress.value = 50
-        }
+        // ZIP file upload
+        uploadStatus.value = 'Uploading ZIP archive...'
+        formDataToSend.append('zip_file', selectedFiles.value[0])
 
         // Add metadata
         formDataToSend.append('logical_id', formData.value.logical_id)
@@ -503,9 +410,7 @@ export default {
               'Content-Type': 'multipart/form-data'
             },
             onUploadProgress: (progressEvent) => {
-              const percentCompleted = uploadType.value === 'zip'
-                ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                : 50 + Math.round((progressEvent.loaded * 50) / progressEvent.total)
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
               uploadProgress.value = percentCompleted
             }
           }
@@ -540,7 +445,6 @@ export default {
     }
 
     return {
-      uploadType,
       selectedFiles,
       isDragging,
       fileInput,
@@ -549,7 +453,6 @@ export default {
       uploadStatus,
       uploadResult,
       formData,
-      detectedFolders,
       canUpload,
       triggerFileInput,
       handleFileSelect,
