@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <document>
+    <logical_id>TEST_DOC_001</logical_id>
+    <title>Sample Archival Document for Testing</title>
+    <description>This is a test document demonstrating the ECO-MiC folder structure for Italian archival digitization.</description>
+    <conservative_id authority="ISIL">IT-TEST-0001</conservative_id>
+    <type_of_resource>risorsa manoscritta</type_of_resource>
+    <archive>
+      <name>Test Archive</name>
+      <contact>test@example.com</contact>
+    </archive>
+    <digitization>
+      <producer>Test Scanner Operator</producer>
+      <scanner>
+        <manufacturer>Test Scanner Inc.</manufacturer>
+        <model>Scanner 3000</model>
+      </scanner>
+      <date>2025-12-13</date>
+    </digitization>
+    <physical_description>
+      <form>manuscript</form>
+      <extent>2 pages</extent>
+    </physical_description>
+    <temporal_coverage>
+      <date_from>1850-01-01</date_from>
+      <date_to>1850-12-31</date_to>
+      <period>19th century</period>
+    </temporal_coverage>
+    <rights>
+      <category>PUBLIC DOMAIN</category>
+      <statement>This work is in the public domain.</statement>
+    </rights>
+  </document>
+</metadata>

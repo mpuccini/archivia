@@ -134,7 +134,7 @@ class MinIOService:
                 file_size,
                 content_type
             )
-            return result.etag
+            return object_name
         except S3Error as e:
             logger.error(f"Error uploading file: {e}")
             raise

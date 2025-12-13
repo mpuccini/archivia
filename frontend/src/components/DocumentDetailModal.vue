@@ -999,123 +999,122 @@
                               :key="file.file_id"
                               class="bg-white border-2 border-gray-200 rounded-xl overflow-hidden hover:border-blue-400 transition-all duration-200 hover:shadow-lg"
                             >
-                        <!-- Image Preview -->
-                        <div
-                          class="relative bg-gray-100 aspect-square overflow-hidden cursor-pointer group"
-                          @click="selectFile(file)"
-                        >
-                          <!-- DNG Badge -->
-                          <div v-if="isDNGFile(file)" class="absolute top-2 left-2 z-10 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center space-x-1">
-                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"/>
-                            </svg>
-                            <span>DNG RAW</span>
-                          </div>
+                              <!-- Image Preview -->
+                              <div
+                                class="relative bg-gray-100 aspect-square overflow-hidden cursor-pointer group"
+                                @click="selectFile(file)"
+                              >
+                                <!-- DNG Badge -->
+                                <div v-if="isDNGFile(file)" class="absolute top-2 left-2 z-10 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg flex items-center space-x-1">
+                                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"/>
+                                  </svg>
+                                  <span>DNG RAW</span>
+                                </div>
 
-                          <img
-                            v-if="isImageFile(file) && getFileThumbnail(file)"
-                            :src="getFileThumbnail(file)"
-                            :alt="file.filename"
-                            class="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
-                          />
-                          <div
-                            v-else-if="isImageFile(file)"
-                            class="w-full h-full flex items-center justify-center"
-                          >
-                            <svg class="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
-                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                          </div>
-                          <div
-                            v-else
-                            class="w-full h-full flex items-center justify-center"
-                          >
-                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          </div>
+                                <img
+                                  v-if="isImageFile(file) && getFileThumbnail(file)"
+                                  :src="getFileThumbnail(file)"
+                                  :alt="file.filename"
+                                  class="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                                />
+                                <div
+                                  v-else-if="isImageFile(file)"
+                                  class="w-full h-full flex items-center justify-center"
+                                >
+                                  <svg class="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                </div>
+                                <div
+                                  v-else
+                                  class="w-full h-full flex items-center justify-center"
+                                >
+                                  <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                </div>
 
-                          <!-- Hover overlay -->
-                          <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
-                            <span class="text-white opacity-0 group-hover:opacity-100 font-medium">Click to view details</span>
-                          </div>
-                        </div>
+                                <!-- Hover overlay -->
+                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
+                                  <span class="text-white opacity-0 group-hover:opacity-100 font-medium">Click to view details</span>
+                                </div>
+                              </div>
 
-                        <!-- File Info -->
-                        <div class="p-4">
-                          <h5 class="text-sm font-semibold text-gray-900 truncate mb-3" :title="file.filename">
-                            {{ file.filename }}
-                          </h5>
+                              <!-- File Info -->
+                              <div class="p-4">
+                                <h5 class="text-sm font-semibold text-gray-900 truncate mb-3" :title="file.filename">
+                                  {{ file.filename }}
+                                </h5>
 
-                          <!-- Camera Info - Prominently Displayed -->
-                          <div v-if="file.scanner_manufacturer || file.scanner_model_name" class="mb-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                            <div class="flex items-center gap-1 mb-1">
-                              <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
-                              </svg>
-                              <span class="text-xs font-bold text-blue-900 uppercase tracking-wide">Camera</span>
-                            </div>
-                            <div v-if="file.scanner_manufacturer" class="text-sm font-bold text-gray-900 mb-0.5">
-                              {{ file.scanner_manufacturer }}
-                            </div>
-                            <div v-if="file.scanner_model_name" class="text-sm font-medium text-gray-700">
-                              {{ file.scanner_model_name }}
+                                <!-- Camera Info - Prominently Displayed -->
+                                <div v-if="file.scanner_manufacturer || file.scanner_model_name" class="mb-3 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                                  <div class="flex items-center gap-1 mb-1">
+                                    <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="text-xs font-bold text-blue-900 uppercase tracking-wide">Camera</span>
+                                  </div>
+                                  <div v-if="file.scanner_manufacturer" class="text-sm font-bold text-gray-900 mb-0.5">
+                                    {{ file.scanner_manufacturer }}
+                                  </div>
+                                  <div v-if="file.scanner_model_name" class="text-sm font-medium text-gray-700">
+                                    {{ file.scanner_model_name }}
+                                  </div>
+                                </div>
+
+                                <!-- Technical Details -->
+                                <div class="space-y-2 text-xs text-gray-600">
+                                  <div v-if="file.image_width && file.image_height" class="flex items-center gap-1">
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                                    </svg>
+                                    <span>{{ file.image_width }} × {{ file.image_height }} px</span>
+                                  </div>
+                                  <div class="flex items-center gap-1">
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                    <span>{{ formatFileSize(file.file_size) }}</span>
+                                  </div>
+                                  <div v-if="file.x_sampling_frequency" class="flex items-center gap-1">
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0h2a2 2 0 012 2v0a2 2 0 01-2 2h-2a2 2 0 01-2-2v0z" />
+                                    </svg>
+                                    <span>{{ file.x_sampling_frequency }} DPI</span>
+                                  </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="mt-4 flex gap-2">
+                                  <button
+                                    @click.stop="downloadFile(file)"
+                                    class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  >
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    Download
+                                  </button>
+                                  <button
+                                    v-if="isEditing"
+                                    @click.stop="deleteFile(file)"
+                                    :disabled="deletingFileId === file.file_id"
+                                    class="px-3 py-2 border border-red-300 text-xs font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                                  >
+                                    <svg v-if="deletingFileId === file.file_id" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           </div>
-
-                          <!-- Technical Details -->
-                          <div class="space-y-2 text-xs text-gray-600">
-                            <div v-if="file.image_width && file.image_height" class="flex items-center gap-1">
-                              <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                              </svg>
-                              <span>{{ file.image_width }} × {{ file.image_height }} px</span>
-                            </div>
-                            <div class="flex items-center gap-1">
-                              <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                              </svg>
-                              <span>{{ formatFileSize(file.file_size) }}</span>
-                            </div>
-                            <div v-if="file.x_sampling_frequency" class="flex items-center gap-1">
-                              <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0h2a2 2 0 012 2v0a2 2 0 01-2 2h-2a2 2 0 01-2-2v0z" />
-                              </svg>
-                              <span>{{ file.x_sampling_frequency }} DPI</span>
-                            </div>
-                          </div>
-
-                          <!-- Action Buttons -->
-                          <div class="mt-4 flex gap-2">
-                            <button
-                              @click.stop="downloadFile(file)"
-                              class="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                              </svg>
-                              Download
-                            </button>
-                            <button
-                              v-if="isEditing"
-                              @click.stop="deleteFile(file)"
-                              :disabled="deletingFileId === file.file_id"
-                              class="px-3 py-2 border border-red-300 text-xs font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
-                            >
-                              <svg v-if="deletingFileId === file.file_id" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                         </div>
                       </div>
                     </div>
@@ -2106,7 +2105,12 @@ export default {
 
             const blob = new Blob([response.data], { type: file.content_type })
             const blobUrl = URL.createObjectURL(blob)
-            imageBlobUrls.value[file.file_id] = blobUrl
+
+            // Use Vue's reactive assignment to trigger reactivity
+            imageBlobUrls.value = {
+              ...imageBlobUrls.value,
+              [file.file_id]: blobUrl
+            }
           } catch (err) {
             console.error(`Error loading image ${file.file_id}:`, err)
           }

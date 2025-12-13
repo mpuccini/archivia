@@ -381,19 +381,40 @@ class METSEcoMicGenerator:
                         software_version.text = doc_file.scanning_software_version
 
     def _add_file_section(self, root: ET.Element, document: Document):
-        """Add file section with proper ECO-MiC structure"""
+        """Add file section with proper ECO-MiC structure grouped by file_category"""
         file_sec = ET.SubElement(root, f"{{{self.namespaces['mets']}}}fileSec")
 
-        # Group files by USE attribute (ARCHIVE, HIGH, etc.)
+        # Map file_category to METS USE attribute (ECO-MiC compliant)
+        category_to_use = {
+            'master': 'MASTER',
+            'normalized': 'REFERENCE',
+            'export_high': 'HIGH',
+            'export_low': 'THUMBNAIL',
+            'metadata': 'METADATA',
+            'icc': 'METADATA',
+            'logs': 'METADATA',
+            'other': 'OTHER'
+        }
+
+        # Group files by file_category
         file_groups = {}
         for doc_file in document.document_files:
-            use = doc_file.file_use or 'ARCHIVE'
-            if use not in file_groups:
-                file_groups[use] = []
-            file_groups[use].append(doc_file)
+            # Use file_category if available, fallback to file_use, then 'other'
+            category = doc_file.file_category or 'other'
+            use_attr = category_to_use.get(category, 'OTHER')
 
-        # Create fileGrp for each USE type
-        for use in sorted(file_groups.keys()):
+            if use_attr not in file_groups:
+                file_groups[use_attr] = []
+            file_groups[use_attr].append(doc_file)
+
+        # Define order for fileGrp elements (ECO-MiC best practice: MASTER first)
+        use_order = ['MASTER', 'REFERENCE', 'HIGH', 'THUMBNAIL', 'METADATA', 'OTHER']
+
+        # Create fileGrp for each USE type in proper order
+        for use in use_order:
+            if use not in file_groups:
+                continue
+
             file_grp = ET.SubElement(file_sec, f"{{{self.namespaces['mets']}}}fileGrp")
             file_grp.set('USE', use)
 
@@ -421,10 +442,26 @@ class METSEcoMicGenerator:
                     file_elem.set('CHECKSUM', doc_file.checksum_md5)
                     file_elem.set('CHECKSUMTYPE', 'MD5')
 
-                # File location
+                # File location - use category-based folder structure
+                category = doc_file.file_category or 'other'
+                folder_name = self._get_folder_name_for_category(category)
                 flocat = ET.SubElement(file_elem, f"{{{self.namespaces['mets']}}}FLocat")
                 flocat.set('LOCTYPE', 'URL')
-                flocat.set(f"{{{self.namespaces['xlink']}}}href", f"files/{filename}")
+                flocat.set(f"{{{self.namespaces['xlink']}}}href", f"file://./{folder_name}/{filename}")
+
+    def _get_folder_name_for_category(self, category: str) -> str:
+        """Map file_category to ECO-MiC folder naming convention"""
+        folder_mapping = {
+            'master': 'Master',
+            'normalized': 'Normalized',
+            'export_high': 'Export300',
+            'export_low': 'Export150',
+            'metadata': 'Metadata',
+            'icc': 'ICC',
+            'logs': 'Logs',
+            'other': 'Other'
+        }
+        return folder_mapping.get(category, 'Other')
 
     def _add_structural_map(self, root: ET.Element, document: Document):
         """Add PHYSICAL structural map (ECO-MiC requirement)"""

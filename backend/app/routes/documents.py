@@ -418,59 +418,63 @@ async def validate_mets_xml(
     return validation_result
 
 
-@router.post("/validate-mets-from-data", response_model=METSValidationResult)
-async def validate_mets_xml_from_data(
-    request: METSValidationFromDataRequest,
-    current_user: User = Depends(get_current_user)
-):
-    """Validate METS XML generated from form data against ECO-MiC 1.1 standard"""
-    from app.models.document import Document
-    from datetime import datetime
-
-    validation_service = METSValidationService()
-    mets_generator = METSEcoMicGenerator()
-
-    # Create a temporary Document object from form data for METS generation
-    now = datetime.now()
-    temp_doc = Document(
-        id=0,
-        logical_id=request.logical_id,
-        title=request.title,
-        description=request.description,
-        conservative_id=request.conservative_id,
-        conservative_id_authority=request.conservative_id_authority,
-        archive_name=request.archive_name,
-        archive_contact=request.archive_contact,
-        license_url=request.license_url,
-        rights_statement=request.rights_statement,
-        image_producer=request.image_producer,
-        scanner_manufacturer=request.scanner_manufacturer,
-        scanner_model=request.scanner_model,
-        document_type=request.document_type,
-        total_pages=request.total_pages,
-        date_from=request.date_from,
-        date_to=request.date_to,
-        period=request.period,
-        location=request.location,
-        language=request.language,
-        owner_id=current_user.id,
-        created_at=now,
-        updated_at=now,
-        document_files=[]  # No files for validation-only
-    )
-
-    # Generate METS XML using ECO-MiC 1.1 generator
-    mets_xml = mets_generator.generate_mets_xml(temp_doc)
-
-    # DEBUG: Save generated XML to temp file for inspection
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(f"Generated METS XML (first 1000 chars): {mets_xml[:1000]}")
-
-    # Validate the METS XML
-    validation_result = await validation_service.validate_mets_xml(
-        mets_xml,
-        f"{request.logical_id}_mets.xml"
-    )
-
-    return validation_result
+# DISABLED: Form validation is too expensive and provides poor UX
+# See METS_VALIDATION_STRATEGY.md for rationale
+# Validation now happens only on-demand (button) and on export
+#
+# @router.post("/validate-mets-from-data", response_model=METSValidationResult)
+# async def validate_mets_xml_from_data(
+#     request: METSValidationFromDataRequest,
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Validate METS XML generated from form data against ECO-MiC 1.1 standard"""
+#     from app.models.document import Document
+#     from datetime import datetime
+#
+#     validation_service = METSValidationService()
+#     mets_generator = METSEcoMicGenerator()
+#
+#     # Create a temporary Document object from form data for METS generation
+#     now = datetime.now()
+#     temp_doc = Document(
+#         id=0,
+#         logical_id=request.logical_id,
+#         title=request.title,
+#         description=request.description,
+#         conservative_id=request.conservative_id,
+#         conservative_id_authority=request.conservative_id_authority,
+#         archive_name=request.archive_name,
+#         archive_contact=request.archive_contact,
+#         license_url=request.license_url,
+#         rights_statement=request.rights_statement,
+#         image_producer=request.image_producer,
+#         scanner_manufacturer=request.scanner_manufacturer,
+#         scanner_model=request.scanner_model,
+#         document_type=request.document_type,
+#         total_pages=request.total_pages,
+#         date_from=request.date_from,
+#         date_to=request.date_to,
+#         period=request.period,
+#         location=request.location,
+#         language=request.language,
+#         owner_id=current_user.id,
+#         created_at=now,
+#         updated_at=now,
+#         document_files=[]  # No files for validation-only
+#     )
+#
+#     # Generate METS XML using ECO-MiC 1.1 generator
+#     mets_xml = mets_generator.generate_mets_xml(temp_doc)
+#
+#     # DEBUG: Save generated XML to temp file for inspection
+#     import logging
+#     logger = logging.getLogger(__name__)
+#     logger.info(f"Generated METS XML (first 1000 chars): {mets_xml[:1000]}")
+#
+#     # Validate the METS XML
+#     validation_result = await validation_service.validate_mets_xml(
+#         mets_xml,
+#         f"{request.logical_id}_mets.xml"
+#     )
+#
+#     return validation_result

@@ -67,9 +67,9 @@ async def validate_file_type_and_size(file: UploadFile, max_size: Optional[int] 
             detail=f"File magic number validation failed for {detected_mime_type}"
         )
 
-    # Get file size by reading to end
-    await file.seek(0, 2)  # Seek to end
-    file_size = file.tell()
+    # Get file size - use file.size attribute instead of seeking
+    # Note: UploadFile.seek() only takes 1 argument (position), not 2
+    file_size = file.size
     await file.seek(0)  # Reset to beginning
 
     # Check file size

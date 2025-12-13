@@ -401,9 +401,14 @@ class FileService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Delete failed: {str(e)}")
     
-    async def upload_file(self, file: UploadFile, user_id: int) -> File:
+    async def upload_file(self, file: UploadFile, user_id: int, file_category: str = None) -> File:
         """
         Simple upload method for image files - handles the complete workflow
+
+        Args:
+            file: Uploaded file
+            user_id: Owner user ID
+            file_category: File category (master, export_high, etc.) - optional, defaults to 'other'
         """
         # Calculate file hash using chunked reading
         await file.seek(0)
@@ -418,37 +423,42 @@ class FileService:
 
         file_hash = file_hash_obj.hexdigest()
         await file.seek(0)  # Reset for later use
-        
+
         # Check if file already exists
-        existing_file = self.db.query(File).filter(File.checksum == file_hash).first()
+        existing_file = self.db.query(File).filter(File.file_hash == file_hash).first()
         if existing_file:
             return existing_file
 
-        # Get file size without loading into memory
-        await file.seek(0, 2)  # Seek to end
-        file_size = file.tell()
+        # Get file size - use file.size attribute
+        # Note: UploadFile.seek() only takes 1 argument, not 2
+        file_size = file.size
         await file.seek(0)  # Reset to beginning
 
         mime_type = file.content_type or "application/octet-stream"
 
+        # Generate consistent path using category-based structure
+        from app.utils.minio_paths import get_minio_object_path
+        category = file_category or 'other'
+        object_name = get_minio_object_path(user_id, file_hash, category, file.filename)
+
         # Upload to MinIO using file object directly (streaming)
-        object_name = f"files/{user_id}/{file_hash}"
-        self.minio_service.upload_object(
+        await self.minio_service.upload_file(
             file.file,  # Pass file object for streaming
             object_name,
-            content_type=mime_type,
-            length=file_size
+            mime_type
         )
-        
+
         # Create file record
         db_file = File(
             filename=file.filename,
             original_filename=file.filename,
-            file_path=object_name,
+            minio_object_name=object_name,  # Use correct attribute name
+            bucket_name=settings.MINIO_BUCKET_NAME,
             file_size=file_size,
-            mime_type=mime_type,
-            checksum=file_hash,
-            owner_id=user_id
+            content_type=mime_type,  # Use correct attribute name
+            file_hash=file_hash,  # Use correct attribute name
+            owner_id=user_id,
+            upload_completed=True
         )
         
         self.db.add(db_file)

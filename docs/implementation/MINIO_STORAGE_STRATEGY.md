@@ -1,0 +1,194 @@
+# MinIO Storage Strategy for Archivia
+
+## Current Situation (Inconsistent)
+
+Two different upload methods use different naming strategies:
+
+1. **create_document_with_file()** - Uses UUID-based names
+   - Path: `{uuid}.{ext}` (e.g., `c02e69cc-2e0b-4c41-a185-f871c28ace41.dng`)
+   - Location: Root of bucket
+
+2. **FileService.upload_file()** - Uses hash-based names
+   - Path: `files/{user_id}/{sha256_hash}` (e.g., `files/2/54c7c33eb9e93b...`)
+   - Location: Organized by user
+
+## Recommended Strategy: Hybrid Approach
+
+### Option A: Content-Addressable Storage with Metadata (RECOMMENDED)
+
+**Benefits:**
+- Automatic deduplication (same file uploaded twice = stored once)
+- Data integrity verification (hash-based)
+- Organized by category and user
+- Supports ECO-MiC folder structure for exports
+
+**Structure:**
+```
+archivia-files/
+├── {user_id}/
+│   ├── master/
+│   │   └── {sha256_hash}.{ext}
+│   ├── normalized/
+│   │   └── {sha256_hash}.{ext}
+│   ├── export_high/
+│   │   └── {sha256_hash}.{ext}
+│   ├── export_low/
+│   │   └── {sha256_hash}.{ext}
+│   ├── metadata/
+│   │   └── {sha256_hash}.{ext}
+│   └── other/
+│       └── {sha256_hash}.{ext}
+```
+
+**Implementation:**
+```python
+def get_object_path(user_id: int, file_hash: str, file_category: str, extension: str) -> str:
+    return f"{user_id}/{file_category}/{file_hash}.{extension}"
+```
+
+**Example:**
+- User 2 uploads `sample1.dng` (master, hash=abc123...)
+  - Path: `2/master/abc123...def.dng`
+- User 2 uploads `doc.jpg` (export_high, hash=xyz789...)
+  - Path: `2/export_high/xyz789...uvw.jpg`
+
+### Option B: Document-Centric Storage
+
+**Benefits:**
+- Easy to find all files for a document
+- Natural grouping by logical_id
+- Simpler export (just grab folder)
+
+**Structure:**
+```
+archivia-files/
+├── {user_id}/
+│   └── {document_logical_id}/
+│       ├── master/
+│       │   └── {filename}
+│       ├── normalized/
+│       │   └── {filename}
+│       └── export_high/
+│           └── {filename}
+```
+
+**Drawbacks:**
+- No automatic deduplication
+- More storage usage
+- Requires cleanup when document deleted
+
+### Option C: Flat with Categorized Buckets
+
+**Benefits:**
+- Extremely simple
+- Clear separation of concerns
+- S3 bucket policies can differ by category
+
+**Structure:**
+```
+archivia-master/        # One bucket per category
+├── {user_id}/
+│   └── {file_hash}.{ext}
+
+archivia-export-high/
+├── {user_id}/
+│   └── {file_hash}.{ext}
+```
+
+**Drawbacks:**
+- Multiple buckets to manage
+- More complex configuration
+- Overkill for small deployments
+
+## Recommendation: **Option A** (Content-Addressable with Category Folders)
+
+### Why Option A?
+
+1. **Deduplication**: If the same master file is uploaded twice, it's stored once
+2. **Integrity**: SHA256 hash ensures file integrity
+3. **Organization**: Easy to see what category files belong to
+4. **Export Compatibility**: Folder structure aligns with ECO-MiC standards
+5. **Scalability**: Works well from 100 documents to 1 million
+6. **Single Bucket**: Simpler to manage than multi-bucket approach
+
+### Migration Path
+
+1. Create utility script to migrate existing files to new structure
+2. Update both upload methods to use consistent path generation
+3. Add database migration to track file migrations (optional)
+
+### Implementation Details
+
+**Path Generation:**
+```python
+# backend/app/utils/minio_paths.py
+def get_minio_object_path(
+    user_id: int,
+    file_hash: str,
+    file_category: str,
+    original_filename: str
+) -> str:
+    """
+    Generate consistent MinIO object path for all files
+
+    Format: {user_id}/{file_category}/{file_hash}.{ext}
+    Example: 2/master/abc123def.dng
+    """
+    extension = original_filename.split('.')[-1] if '.' in original_filename else ''
+    if extension:
+        return f"{user_id}/{file_category}/{file_hash}.{extension}"
+    return f"{user_id}/{file_category}/{file_hash}"
+```
+
+**Category Mapping for ECO-MiC Export:**
+
+When exporting to ZIP with ECO-MiC structure, map storage categories to ECO-MiC folders:
+
+| Storage Category | ECO-MiC Export Folder |
+|------------------|------------------------|
+| `master` | `Master/` |
+| `normalized` | `Normalized/` |
+| `export_high` | `Export300/` |
+| `export_low` | `Export150/` |
+| `metadata` | `Metadata/` |
+| `icc` | `ICC/` |
+| `logs` | `Logs/` |
+| `other` | `Other/` |
+
+## Implementation Priority
+
+### Phase 1: Fix Inconsistency (Immediate)
+- ✅ Update both upload methods to use same path strategy
+- ✅ Choose Option A structure
+- ✅ Ensure new uploads follow consistent pattern
+
+### Phase 2: Migrate Existing Files (Optional)
+- Create migration script for existing files
+- Run migration during maintenance window
+- Update database records
+
+### Phase 3: Optimize (Future)
+- Add lifecycle policies for old files
+- Implement storage analytics
+- Add backup/replication if needed
+
+## Security Considerations
+
+- **Access Control**: MinIO bucket policy restricts access to authenticated users
+- **Path Traversal**: All paths are generated by backend, never from user input
+- **Hash Integrity**: SHA256 ensures files haven't been tampered with
+- **User Isolation**: User ID in path provides logical separation
+
+## Questions to Consider
+
+1. **File Retention**: How long should deleted document files remain in MinIO?
+2. **Versioning**: Should we enable MinIO versioning for audit trail?
+3. **Backup**: Should we replicate to secondary MinIO/S3?
+4. **Analytics**: Do we need storage usage reports per user/category?
+
+## Current Status
+
+- ❌ Inconsistent paths (UUID vs hash-based)
+- ❌ No category-based organization in storage
+- ✅ Hash-based integrity checking works
+- ✅ User-based separation works

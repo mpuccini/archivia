@@ -33,6 +33,7 @@ class DocumentService:
     def __init__(self, db: Session):
         self.db = db
         self.file_service = FileService()
+        self.file_service.db = db  # Inject database session into FileService
         self.minio_service = MinIOService()
 
     def _convert_to_document_detail(self, document: Document) -> DocumentDetail:
@@ -43,6 +44,7 @@ class DocumentService:
                 'id': doc_file.id,
                 'file_id': doc_file.file_id,
                 'file_use': doc_file.file_use,
+                'file_category': doc_file.file_category,  # Add file category
                 'file_label': doc_file.file_label,
                 'sequence_number': doc_file.sequence_number,
                 'checksum_md5': doc_file.checksum_md5,
@@ -225,8 +227,14 @@ class DocumentService:
                     tmp_file.write(chunk)
                 tmp_file.flush()
 
+                # Auto-categorize file based on extension FIRST
+                from app.utils.file_categorizer import FileCategorizer
+                from app.utils.minio_paths import get_minio_object_path
+                categorizer = FileCategorizer()
+                file_category, confidence = categorizer.categorize_file(file.filename)
+
                 # Calculate hash using chunked reading
-                file_hash_obj = hashlib.md5()
+                file_hash_obj = hashlib.sha256()  # Use SHA256 for consistency
                 with open(tmp_file_path, 'rb') as hash_file:
                     while True:
                         chunk = hash_file.read(settings.HASH_CHUNK_SIZE)
@@ -234,16 +242,20 @@ class DocumentService:
                             break
                         file_hash_obj.update(chunk)
 
+                file_hash = file_hash_obj.hexdigest()
+
+                # Generate consistent MinIO path using category
+                minio_object_name = get_minio_object_path(user_id, file_hash, file_category, file.filename)
+
                 # Create file record manually
                 from app.models.file import File
-                minio_object_name = self.minio_service.generate_object_name(file.filename)
                 uploaded_file = File(
                     filename=file.filename,
                     original_filename=file.filename,
                     file_size=file.size,
                     content_type=file.content_type,
                     owner_id=user_id,
-                    file_hash=file_hash_obj.hexdigest(),
+                    file_hash=file_hash,
                     minio_object_name=minio_object_name,
                     bucket_name=settings.MINIO_BUCKET_NAME,
                     upload_completed=True
@@ -272,13 +284,17 @@ class DocumentService:
                 except Exception as e:
                     logger.error(f"Error extracting metadata from {file.filename}: {e}", exc_info=True)
 
+            # Get file_use from already-categorized file_category
+            file_use = categorizer.get_file_use_from_category(file_category)
+
             # Create document-file association with extracted metadata
             doc_file = DocumentFile(
                 document_id=document.id,
                 file_id=uploaded_file.id,
-                file_use=document_data.file_use,
+                file_category=file_category,  # Auto-categorized earlier
+                file_use=document_data.file_use or file_use,  # Use provided or auto-detected
                 file_label=document_data.file_label,
-                sequence_number=document_data.sequence_number,
+                sequence_number=document_data.sequence_number or 1,  # Default to 1 if not provided
                 checksum_md5=uploaded_file.file_hash,
                 # Technical metadata from extraction - Standard MIX fields
                 image_width=metadata.get('image_width'),
@@ -989,6 +1005,8 @@ class DocumentService:
     
     async def upload_document_image(self, document_id: int, file: UploadFile, user_id: int) -> dict:
         """Upload an image for a specific document"""
+        from app.utils.file_categorizer import FileCategorizer
+
         # Check if document exists and belongs to user
         document = self.db.query(Document).filter(
             Document.id == document_id,
@@ -1005,32 +1023,49 @@ class DocumentService:
         file.filename = validate_filename(file.filename)
 
         try:
-            # Upload file to storage
-            uploaded_file = await self.file_service.upload_file(file, user_id)
-            
+            # Auto-categorize file based on extension BEFORE upload
+            categorizer = FileCategorizer()
+            file_category, confidence = categorizer.categorize_file(file.filename)
+            file_use = categorizer.get_file_use_from_category(file_category)
+
+            # Upload file to storage with category for proper path
+            uploaded_file = await self.file_service.upload_file(file, user_id, file_category)
+
+            # Get next sequence number
+            max_seq = self.db.query(func.max(DocumentFile.sequence_number)).filter(
+                DocumentFile.document_id == document.id
+            ).scalar() or 0
+
             # Link file to document
             document_file = DocumentFile(
                 document_id=document.id,
                 file_id=uploaded_file.id,
-                file_use="master",  # Assuming images are master files
-                sequence_number=1
+                file_category=file_category,
+                file_use=file_use,
+                sequence_number=max_seq + 1,
+                checksum_md5=uploaded_file.file_hash  # Populate hash for METS integrity
             )
-            
+
             self.db.add(document_file)
             self.db.commit()
-            
+
             return {
                 "success": True,
                 "message": f"Image uploaded successfully for document {document.logical_id}",
-                "document_id": document.id
+                "document_id": document.id,
+                "file_category": file_category,
+                "confidence": confidence
             }
-            
+
         except Exception as e:
             self.db.rollback()
             raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")
     
     async def batch_upload_images(self, files: List[UploadFile], user_id: int) -> dict:
-        """Batch upload images, matching by filename to logical_id"""
+        """
+        Batch upload images, matching by filename to logical_id.
+        Only attaches files to EXISTING documents - does NOT create new documents.
+        """
         success = []
         errors = []
         created_documents = []
@@ -1054,47 +1089,37 @@ class DocumentService:
 
                 # Check if document exists in our pre-loaded map
                 document = doc_map.get(logical_id)
-                
-                # If document doesn't exist, create a minimal one
+
+                # If document doesn't exist, report error - DO NOT auto-create
                 if not document:
-                    try:
-                        doc_data = DocumentCreate(
-                            logical_id=logical_id,
-                            title=f"Document {logical_id}",
-                            description=f"Auto-created document for image {file.filename}"
-                        )
-                        document = self.create_document(doc_data, user_id)
-                        created_documents.append({
-                            "logical_id": logical_id,
-                            "id": document.id
-                        })
-                    except Exception as e:
-                        errors.append({
-                            "filename": file.filename,
-                            "logical_id": logical_id,
-                            "error": f"Failed to create document: {str(e)}"
-                        })
-                        continue
-                
-                # Upload the image
+                    errors.append({
+                        "filename": file.filename,
+                        "logical_id": logical_id,
+                        "error": f"No document found with logical_id '{logical_id}'. Create the document first or upload files individually."
+                    })
+                    continue
+
+                # Upload the image to the existing document
                 result = await self.upload_document_image(document.id, file, user_id)
                 success.append({
                     "filename": file.filename,
                     "logical_id": logical_id,
-                    "document_id": document.id
+                    "document_id": document.id,
+                    "file_category": result.get("file_category"),
+                    "confidence": result.get("confidence")
                 })
-                
+
             except Exception as e:
                 errors.append({
                     "filename": file.filename,
                     "logical_id": logical_id if 'logical_id' in locals() else 'unknown',
                     "error": str(e)
                 })
-        
+
         return {
             "success": success,
             "errors": errors,
-            "created_documents": created_documents
+            "created_documents": created_documents  # Will always be empty now
         }
     
     def generate_mets_xml_for_validation(self, document_id: int, user_id: int) -> str:
@@ -1194,6 +1219,10 @@ class DocumentService:
                             'folder_path': rel_folder
                         })
 
+                logger.info(f"Extracted {len(file_list)} files from ZIP")
+                for file_info in file_list[:5]:  # Log first 5 files
+                    logger.info(f"  File: {file_info['filename']}, Folder: {file_info['folder_path']}")
+
                 # Categorize files
                 categorizer = FileCategorizer()
                 categorized_files = {}
@@ -1211,37 +1240,41 @@ class DocumentService:
                     try:
                         # Upload file to MinIO
                         with open(full_path, 'rb') as file_handle:
-                            # Create a file-like object with required attributes
-                            class FileWrapper:
-                                def __init__(self, file, filename):
-                                    self.file = file
-                                    self.filename = filename
-
-                                def read(self, size=-1):
-                                    return self.file.read(size)
-
-                                def seek(self, offset, whence=0):
-                                    return self.file.seek(offset, whence)
-
-                            wrapped_file = FileWrapper(file_handle, filename)
-
                             # Get file size
                             file_size = os.path.getsize(full_path)
 
-                            # Generate unique filename for MinIO
-                            minio_filename = f"{logical_id}_{filename}"
-                            object_name = await self.minio_service.upload_file(
-                                wrapped_file,
-                                minio_filename
+                            # Calculate file hash
+                            import hashlib
+                            file_handle.seek(0)
+                            file_hash = hashlib.sha256(file_handle.read()).hexdigest()
+                            file_handle.seek(0)
+
+                            # Generate proper MinIO path using utility
+                            from app.utils.minio_paths import get_minio_object_path
+                            object_name = get_minio_object_path(
+                                user_id=user_id,
+                                file_hash=file_hash,
+                                file_category=category,
+                                original_filename=filename
+                            )
+
+                            content_type = self._guess_content_type(filename)
+                            uploaded_object_name = await self.minio_service.upload_file(
+                                file_handle,
+                                object_name,
+                                content_type
                             )
 
                             # Create File record
                             file_record = File(
                                 filename=filename,
-                                content_type=self._guess_content_type(filename),
+                                original_filename=filename,
+                                content_type=content_type,
                                 file_size=file_size,
+                                file_hash=file_hash,
                                 minio_object_name=object_name,
-                                uploaded_by_id=user_id
+                                bucket_name=settings.MINIO_BUCKET_NAME,
+                                owner_id=user_id
                             )
                             self.db.add(file_record)
                             self.db.flush()

@@ -69,6 +69,20 @@
                     Batch Upload Images
                   </button>
                 </MenuItem>
+                <MenuItem v-slot="{ active }">
+                  <button
+                    @click="showFolderUpload = true"
+                    :class="[
+                      active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                      'group flex items-center px-4 py-2 text-sm w-full text-left'
+                    ]"
+                  >
+                    <svg class="mr-3 h-4 w-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                    Upload ECO-MiC Folder
+                  </button>
+                </MenuItem>
               </div>
             </MenuItems>
           </transition>
@@ -220,6 +234,59 @@
                   <BatchImageUpload 
                     @upload-complete="handleBatchImageUploadComplete" 
                     @cancel="closeBatchImageUpload" 
+                  />
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </div>
+      </Dialog>
+    </TransitionRoot>
+
+    <!-- Folder Upload Modal -->
+    <TransitionRoot appear :show="showFolderUpload" as="template">
+      <Dialog as="div" @close="closeFolderUpload" class="relative z-50">
+        <TransitionChild
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-black bg-opacity-25" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4 text-center">
+            <TransitionChild
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <DialogPanel class="w-full max-w-6xl transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+                <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                  <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
+                    Upload ECO-MiC Folder Structure
+                  </DialogTitle>
+                  <button
+                    @click="closeFolderUpload"
+                    class="rounded-md bg-white text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="p-6">
+                  <FolderUpload
+                    @success="handleFolderUploadComplete"
+                    @cancel="closeFolderUpload"
                   />
                 </div>
               </DialogPanel>
@@ -679,6 +746,7 @@ import DocumentUploadForm from './DocumentUploadForm.vue'
 import DocumentDetailModal from './DocumentDetailModal.vue'
 import ExcelBatchImport from './ExcelBatchImport.vue'
 import BatchImageUpload from './BatchImageUpload.vue'
+import FolderUpload from './FolderUpload.vue'
 import axios from 'axios'
 
 export default {
@@ -688,6 +756,7 @@ export default {
     DocumentDetailModal,
     ExcelBatchImport,
     BatchImageUpload,
+    FolderUpload,
     Dialog,
     DialogPanel,
     DialogTitle,
@@ -708,6 +777,7 @@ export default {
     const showUploadForm = ref(false)
     const showExcelBatchImport = ref(false)
     const showBatchImageUpload = ref(false)
+    const showFolderUpload = ref(false)
     const showDeleteConfirm = ref(false)
     const isDeleting = ref(false)
     const currentPage = ref(1)
@@ -782,6 +852,10 @@ export default {
       showBatchImageUpload.value = false
     }
 
+    const closeFolderUpload = () => {
+      showFolderUpload.value = false
+    }
+
     const handleUploadComplete = () => {
       closeUploadForm()
       loadDocuments()
@@ -794,6 +868,11 @@ export default {
 
     const handleBatchImageUploadComplete = () => {
       closeBatchImageUpload()
+      loadDocuments()
+    }
+
+    const handleFolderUploadComplete = () => {
+      closeFolderUpload()
       loadDocuments()
     }
 
@@ -1107,6 +1186,7 @@ export default {
       showUploadForm,
       showExcelBatchImport,
       showBatchImageUpload,
+      showFolderUpload,
       showDeleteConfirm,
       isDeleting,
       currentPage,
@@ -1118,9 +1198,11 @@ export default {
       closeUploadForm,
       closeExcelBatchImport,
       closeBatchImageUpload,
+      closeFolderUpload,
       handleUploadComplete,
       handleExcelImportComplete,
       handleBatchImageUploadComplete,
+      handleFolderUploadComplete,
       viewDocument,
       openDocumentDetail,
       handleDocumentUpdated,

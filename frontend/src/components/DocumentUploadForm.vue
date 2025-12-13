@@ -1673,57 +1673,73 @@ export default {
       error.value = ''
 
       try {
-        // Upload each file individually with the same metadata
-        const uploadPromises = selectedFiles.value.map(async (file, index) => {
-          const formDataToSend = new FormData()
-          formDataToSend.append('file', file)
-          
-          // Add metadata for each file
-          const fileSpecificData = {
-            ...formData,
-            logical_id: selectedFiles.value.length > 1 
-              ? `${formData.logical_id}_${index + 1}` 
-              : formData.logical_id,
-            sequence_number: index + 1,
-            total_files: selectedFiles.value.length
-          }
+        // STEP 1: Create the document with metadata (using first file)
+        uploadStatus.value = 'Creating document...'
+        const firstFileFormData = new FormData()
+        firstFileFormData.append('file', selectedFiles.value[0])
 
-          // Add all form fields
-          for (const [key, value] of Object.entries(fileSpecificData)) {
-            if (value !== null && value !== '') {
-              formDataToSend.append(key, value)
+        // Add all metadata fields (use original logical_id, no suffix!)
+        for (const [key, value] of Object.entries(formData)) {
+          if (value !== null && value !== '') {
+            firstFileFormData.append(key, value)
+          }
+        }
+
+        const createResponse = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/documents/upload`,
+          firstFileFormData,
+          {
+            headers: {
+              'Authorization': `Bearer ${authStore.token}`,
+              'Content-Type': 'multipart/form-data'
+            },
+            onUploadProgress: (progressEvent) => {
+              const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              uploadProgress.value = Math.round(fileProgress / (selectedFiles.value.length + 1))
+              uploadStatus.value = `Creating document... ${fileProgress}%`
             }
           }
+        )
 
-          uploadStatus.value = `Uploading ${file.name}...`
-          
-          return axios.post(
-            `${import.meta.env.VITE_API_URL}/api/documents/upload`,
-            formDataToSend,
-            {
-              headers: {
-                'Authorization': `Bearer ${authStore.token}`,
-                'Content-Type': 'multipart/form-data'
-              },
-              onUploadProgress: (progressEvent) => {
-                const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-                const overallProgress = Math.round(((index * 100) + fileProgress) / selectedFiles.value.length)
-                uploadProgress.value = overallProgress
-                uploadStatus.value = `Uploading ${file.name}... ${fileProgress}%`
+        const createdDocument = createResponse.data
+
+        // STEP 2: Upload remaining files to the created document
+        if (selectedFiles.value.length > 1) {
+          const remainingFiles = selectedFiles.value.slice(1)
+
+          for (let i = 0; i < remainingFiles.length; i++) {
+            const file = remainingFiles[i]
+            const fileFormData = new FormData()
+            fileFormData.append('file', file)
+
+            uploadStatus.value = `Uploading ${file.name}... (${i + 2}/${selectedFiles.value.length})`
+
+            await axios.post(
+              `${import.meta.env.VITE_API_URL}/api/documents/${createdDocument.id}/images`,
+              fileFormData,
+              {
+                headers: {
+                  'Authorization': `Bearer ${authStore.token}`,
+                  'Content-Type': 'multipart/form-data'
+                },
+                onUploadProgress: (progressEvent) => {
+                  const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                  const overallProgress = Math.round(((i + 1) * 100 + fileProgress) / (selectedFiles.value.length + 1))
+                  uploadProgress.value = overallProgress
+                  uploadStatus.value = `Uploading ${file.name}... ${fileProgress}%`
+                }
               }
-            }
-          )
-        })
+            )
+          }
+        }
 
-        const responses = await Promise.all(uploadPromises)
-        
         uploadStatus.value = 'Upload complete!'
         uploadProgress.value = 100
-        
+
         setTimeout(() => {
           emit('upload-complete', {
-            documents: responses.map(r => r.data),
-            count: responses.length
+            documents: [createdDocument],
+            count: 1  // Always 1 document, even with multiple files
           })
         }, 1000)
 
