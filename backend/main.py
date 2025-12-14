@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import create_tables, get_db
 from app.services.auth import AuthService
+from app.services.mongodb import mongodb_service
 from app.routes import auth_router, files_router
 from app.routes.documents import router as documents_router
 from app.schemas.user import UserCreate
@@ -42,8 +43,27 @@ async def startup_event():
     # Create database tables
     create_tables()
 
+    # Connect to MongoDB
+    try:
+        await mongodb_service.connect_async()
+        logger.info("MongoDB connection established successfully")
+    except Exception as e:
+        logger.error(f"Failed to connect to MongoDB: {e}")
+        raise
+
     logger.info("Archivia API v2.0.0 started successfully!")
     logger.info("To create an admin user, use the /api/auth/register endpoint or run the user creation script")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    logger.info("Shutting down Archivia API...")
+
+    # Close MongoDB connection
+    await mongodb_service.close_async()
+
+    logger.info("Archivia API shut down successfully")
 
 
 @app.get("/")

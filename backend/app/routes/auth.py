@@ -36,8 +36,19 @@ def get_current_user(
 
 
 @router.post("/register", response_model=UserResponse)
-async def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Register a new user"""
+async def register(
+    user_data: UserCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Register a new user (admin only)"""
+    # Only allow admin to create new users
+    if current_user.username != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Only admin can create new users"
+        )
+
     # Check if user already exists
     db_user = auth_service.get_user_by_username(db, user_data.username)
     if db_user:
@@ -45,7 +56,7 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
             status_code=400,
             detail="Username already registered"
         )
-    
+
     # Create new user
     db_user = auth_service.create_user(db, user_data)
     return UserResponse.model_validate(db_user)

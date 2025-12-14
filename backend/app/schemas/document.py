@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, field_validator, HttpUrl
+from pydantic import BaseModel, Field, field_validator
 import re
 
 
@@ -48,8 +48,17 @@ class DocumentFileSchema(BaseModel):
         from_attributes = True
 
 
+# ==========================================
+# PLATFORM SCHEMAS (PostgreSQL)
+# ==========================================
+
 class DocumentBase(BaseModel):
-    """Base schema for document"""
+    """
+    Base schema for document - Platform metadata only
+
+    Only contains fields stored in PostgreSQL.
+    METS ECO-MiC metadata is stored separately in MongoDB.
+    """
     logical_id: str = Field(
         ...,
         description="Logical identifier for the document",
@@ -57,6 +66,19 @@ class DocumentBase(BaseModel):
         max_length=255,
         pattern=r'^[a-zA-Z0-9_\-\.]+$'
     )
+
+
+class DocumentCreate(DocumentBase):
+    """
+    Schema for creating a document
+
+    Accepts both platform and METS metadata in a single request.
+    Platform fields go to PostgreSQL, METS fields go to MongoDB.
+    """
+    # Platform fields (inherited from DocumentBase)
+    # logical_id: str
+
+    # METS ECO-MiC metadata fields (will be extracted and sent to MongoDB)
     conservative_id: Optional[str] = Field(None, max_length=255)
     conservative_id_authority: Optional[str] = Field(None, max_length=255)
     title: Optional[str] = Field(None, min_length=1, max_length=500)
@@ -111,7 +133,8 @@ class DocumentBase(BaseModel):
     # METS header
     record_status: Optional[str] = Field("COMPLETE", max_length=20)  # "COMPLETE", "MINIMUM", "REFERENCED"
 
-    mets_xml: Optional[str] = None
+    # METS schema version
+    schema_version: Optional[str] = Field("1.2", pattern=r'^1\.[12]$')  # "1.1" or "1.2"
 
     @field_validator('license_url')
     @classmethod
@@ -134,14 +157,18 @@ class DocumentBase(BaseModel):
         return v
 
 
-class DocumentCreate(DocumentBase):
-    """Schema for creating a document"""
-    pass
-
-
 class DocumentUpdate(BaseModel):
-    """Schema for updating a document"""
+    """
+    Schema for updating a document
+
+    All fields optional. Updates can modify:
+    - Platform data in PostgreSQL (logical_id)
+    - METS metadata in MongoDB (all other fields)
+    """
+    # Platform field
     logical_id: Optional[str] = None
+
+    # METS ECO-MiC metadata fields (MongoDB)
     conservative_id: Optional[str] = None
     conservative_id_authority: Optional[str] = None
     title: Optional[str] = None
@@ -196,31 +223,56 @@ class DocumentUpdate(BaseModel):
     # METS header
     record_status: Optional[str] = None
 
-    mets_xml: Optional[str] = None
 
+# ==========================================
+# RESPONSE SCHEMAS (Merged PostgreSQL + MongoDB)
+# ==========================================
 
 class DocumentListItem(BaseModel):
-    """Schema for document list view"""
+    """
+    Schema for document list view
+
+    Merges platform data from PostgreSQL with key METS fields from MongoDB.
+    """
+    # Platform fields (PostgreSQL)
     id: int
     logical_id: str
+    owner_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    # METS fields (MongoDB) - key fields for list view
     title: Optional[str] = None
     archive_name: Optional[str] = None
     document_type: Optional[str] = None
     total_pages: Optional[int] = None
-    created_at: datetime
+
+    # Computed fields
     file_count: int = 0
-    
+
     class Config:
         from_attributes = True
 
 
 class DocumentDetail(BaseModel):
-    """Schema for detailed document view"""
+    """
+    Schema for detailed document view
+
+    Merges complete data from PostgreSQL (platform) and MongoDB (METS).
+    Provides backward-compatible response structure.
+    """
+    # Platform fields (PostgreSQL)
     id: int
     logical_id: str
+    owner_id: int
+    created_at: datetime
+    updated_at: datetime
+    mets_document_id: Optional[str] = None
+
+    # METS ECO-MiC metadata (MongoDB)
     conservative_id: Optional[str] = None
     conservative_id_authority: Optional[str] = None
-    title: Optional[str] = None  # Allow empty/None for existing documents
+    title: Optional[str] = None
     description: Optional[str] = None
 
     # Archive information
@@ -271,12 +323,12 @@ class DocumentDetail(BaseModel):
 
     # METS header
     record_status: Optional[str] = None
+    schema_version: Optional[str] = None
 
+    # Generated METS XML (computed field, not stored)
     mets_xml: Optional[str] = None
 
-    owner_id: int
-    created_at: datetime
-    updated_at: datetime
+    # Files (PostgreSQL relationship)
     document_files: List[DocumentFileSchema] = []
 
     class Config:
@@ -284,46 +336,51 @@ class DocumentDetail(BaseModel):
 
 
 class DocumentUpload(BaseModel):
-    """Schema for document upload with metadata"""
+    """
+    Schema for document upload with metadata
+
+    Used for batch operations and image uploads.
+    Accepts flat structure for backward compatibility.
+    """
     # Basic required fields
     logical_id: Optional[str] = Field(None, description="Logical identifier for the document (auto-filled from filename if not provided)")
     title: Optional[str] = None
     description: Optional[str] = None
-    
+
     # Optional metadata fields
     conservative_id: Optional[str] = None
     conservative_id_authority: Optional[str] = None
-    
+
     # Archive information
     archive_name: Optional[str] = None
     archive_contact: Optional[str] = None
     fund_name: Optional[str] = None
     series_name: Optional[str] = None
     folder_number: Optional[str] = None
-    
+
     # Temporal information
     date_from: Optional[str] = None
     date_to: Optional[str] = None
     period: Optional[str] = None
-    
+
     # Geographic and contextual information
     location: Optional[str] = None
     language: Optional[str] = None
     subjects: Optional[str] = None
-    
+
     # Rights information
     license_url: Optional[str] = None
     rights_statement: Optional[str] = None
-    
+
     # Technical metadata
     image_producer: Optional[str] = None
     scanner_manufacturer: Optional[str] = None
     scanner_model: Optional[str] = None
-    
+
     # Physical structure
     document_type: Optional[str] = None
     total_pages: Optional[int] = None
-    
+
     # File metadata
     file_use: Optional[str] = None
     file_label: Optional[str] = None

@@ -27,6 +27,7 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://archivia:archivia123@db:5432/archivia
+      MONGODB_URL: mongodb://archivia:archivia123@mongodb:27017/archivia_mets?authSource=admin
       SECRET_KEY: ${SECRET_KEY:-please-generate-a-secure-secret-key}
       MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: archivia
@@ -38,6 +39,8 @@ services:
       db:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      mongodb:
         condition: service_healthy
     networks:
       - archivia-net
@@ -77,9 +80,32 @@ services:
       timeout: 20s
       retries: 3
 
+  mongodb:
+    image: mongo:7.0
+    container_name: archivia-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: archivia
+      MONGO_INITDB_ROOT_PASSWORD: archivia123
+      MONGO_INITDB_DATABASE: archivia_mets
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    ports:
+      - "27017:27017"
+    networks:
+      - archivia-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: ["--auth"]
+
 volumes:
   pgdata:
   minio_data:
+  mongodb_data:
+  mongodb_config:
 
 networks:
   archivia-net:

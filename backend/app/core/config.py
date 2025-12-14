@@ -11,6 +11,7 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str
+    MONGODB_URL: str = "mongodb://archivia:archivia123@mongodb:27017/archivia_mets?authSource=admin"
 
     # Authentication
     SECRET_KEY: str

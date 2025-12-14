@@ -6,75 +6,24 @@ from app.models.base import Base
 
 
 class Document(Base):
-    """Document model for METS metadata"""
+    """
+    Document model - Platform metadata only
+
+    Stores core platform data for document management.
+    METS ECO-MiC archival metadata is stored separately in MongoDB.
+    """
     __tablename__ = "documents"
-    
+
+    # Platform fields
     id = Column(Integer, primary_key=True, index=True)
-    
-    # Basic identification
-    logical_id = Column(String(255), nullable=False, unique=True)  # MODS identifier logicalId
-    conservative_id = Column(String(255), nullable=True)  # MODS identifier conservativeId
-    conservative_id_authority = Column(String(100), nullable=True)  # ISIL (e.g., "IT-MO0172")
-    title = Column(String(500), nullable=True)
-    description = Column(Text, nullable=True)
-
-    # MODS typeOfResource (ECO-MiC required)
-    type_of_resource = Column(String(100), nullable=True)  # e.g., "risorsa manoscritta", "documento testuale"
-    
-    # Archive information
-    archive_name = Column(String(255), nullable=True)  # e.g., "Archivio di stato di Modena"
-    archive_contact = Column(String(255), nullable=True)  # Contact email
-    fund_name = Column(String(255), nullable=True)  # Fund/Collection name
-    series_name = Column(String(255), nullable=True)  # Series name
-    folder_number = Column(String(100), nullable=True)  # Folder/Unit number (e.g., "Busta 45")
-    
-    # Temporal information
-    date_from = Column(String(50), nullable=True)  # Start date
-    date_to = Column(String(50), nullable=True)  # End date
-    period = Column(String(255), nullable=True)  # Historical period
-    
-    # Geographic and contextual information
-    location = Column(String(255), nullable=True)  # Place/Location
-    language = Column(String(10), nullable=True)  # Language code (e.g., "it", "en")
-    subjects = Column(Text, nullable=True)  # Subjects/Keywords (comma-separated)
-
-    # Corporate and personal names (ECO-MiC)
-    producer_name = Column(String(255), nullable=True)  # Corporate/personal name who produced the document
-    producer_type = Column(String(20), nullable=True)  # "corporate" or "personal"
-    producer_role = Column(String(100), nullable=True)  # e.g., "producer", "author"
-    creator_name = Column(String(255), nullable=True)  # Creator/contributor name
-    creator_type = Column(String(20), nullable=True)  # "corporate" or "personal"
-    creator_role = Column(String(100), nullable=True)  # e.g., "creator", "contributor"
-    
-    # Rights information (ECO-MiC metsrights)
-    license_url = Column(String(500), nullable=True)  # DCT license URL
-    rights_statement = Column(String(500), nullable=True)  # DCT rights statement
-    rights_category = Column(String(50), nullable=True)  # e.g., "COPYRIGHTED", "PUBLIC DOMAIN", "CONTRACTUAL"
-    rights_holder = Column(String(255), nullable=True)  # Rights holder name
-    rights_constraint = Column(String(100), nullable=True)  # e.g., "NoC-OKLR", "InC"
-    
-    # Technical metadata (from MIX)
-    image_producer = Column(String(255), nullable=True)  # e.g., "EDS Gamma"
-    scanner_manufacturer = Column(String(255), nullable=True)  # e.g., "Metis Systems srl"
-    scanner_model = Column(String(500), nullable=True)  # Scanner model details
-    
-    # Physical structure
-    document_type = Column(String(100), nullable=True)  # e.g., "book", "manuscript", "folder"
-    total_pages = Column(Integer, nullable=True)
-    physical_form = Column(String(100), nullable=True)  # e.g., "documento testuale", "documento cartografico"
-    extent_description = Column(String(255), nullable=True)  # e.g., "c. 14 nel fascicolo", "1 volume"
-    
-    # Full METS XML storage
-    mets_xml = Column(Text, nullable=True)  # Store complete METS XML
-
-    # METS header information (ECO-MiC)
-    record_status = Column(String(20), nullable=True, default="COMPLETE")  # "COMPLETE", "MINIMUM", "REFERENCED"
-
-    # System fields
+    logical_id = Column(String(255), nullable=False, unique=True)  # Denormalized for queries
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-    
+
+    # MongoDB reference
+    mets_document_id = Column(String(24), nullable=True)  # MongoDB ObjectId as string
+
     # Relationships
     owner = relationship("User", back_populates="documents")
     document_files = relationship("DocumentFile", back_populates="document", cascade="all, delete-orphan")
@@ -93,7 +42,7 @@ class DocumentFile(Base):
     file_category = Column(String(50), nullable=True)  # e.g., "master", "normalized", "export_high", "export_low", "metadata", "icc", "logs"
     file_label = Column(String(255), nullable=True)  # e.g., "Dorso", "Piatto anteriore"
     sequence_number = Column(Integer, nullable=True)  # ORDER attribute
-    checksum_md5 = Column(String(32), nullable=True)
+    checksum_md5 = Column(String(64), nullable=True)  # Supports both MD5 (32) and SHA256 (64)
     
     # Technical metadata specific to this file (MIX)
     image_width = Column(Integer, nullable=True)

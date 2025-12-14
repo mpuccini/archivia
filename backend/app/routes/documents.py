@@ -46,7 +46,7 @@ class FolderUploadResult(BaseModel):
     success: bool
     message: str
     document_id: int = None
-    categorized_files: Dict[str, List[dict]] = None
+    categorized_files: Dict[str, List[str]] = None
     total_files: int = 0
 
 
@@ -96,7 +96,7 @@ async def create_document(
 ):
     """Create a new document"""
     service = DocumentService(db)
-    return service.create_document(document, current_user.id)
+    return await service.create_document(document, current_user.id)
 
 
 @router.post("/upload", response_model=DocumentDetail)
@@ -147,9 +147,9 @@ async def upload_document(
     
     service = DocumentService(db)
     document = await service.create_document_with_file(file, document_data, current_user.id)
-    
+
     # Return detailed document
-    return service.get_document(document.id, current_user.id)
+    return await service.get_document(document.id, current_user.id)
 
 
 @router.get("/", response_model=List[DocumentListItem])
@@ -161,22 +161,22 @@ async def get_documents(
 ):
     """Get list of documents"""
     service = DocumentService(db)
-    return service.get_documents(current_user.id, skip, limit)
+    return await service.get_documents(current_user.id, skip, limit)
 
 
 @router.get("/{document_id}", response_model=DocumentDetail)
-def get_document(
+async def get_document(
     document_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Get a specific document"""
     service = DocumentService(db)
-    document = service.get_document(document_id, current_user.id)
-    
+    document = await service.get_document(document_id, current_user.id)
+
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
-    
+
     return document
 
 
@@ -189,12 +189,12 @@ async def update_document(
 ):
     """Update a document"""
     service = DocumentService(db)
-    document = service.update_document(document_id, document_data, current_user.id)
-    
+    document = await service.update_document(document_id, document_data, current_user.id)
+
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
-    
-    return service.get_document(document.id, current_user.id)
+
+    return await service.get_document(document.id, current_user.id)
 
 
 @router.delete("/batch")
@@ -205,13 +205,13 @@ async def delete_documents_batch(
 ):
     """Delete multiple documents"""
     service = DocumentService(db)
-    
+
     deleted_count = 0
     errors = []
-    
+
     for document_id in request.document_ids:
         try:
-            success = service.delete_document(document_id, current_user.id)
+            success = await service.delete_document(document_id, current_user.id)
             if success:
                 deleted_count += 1
             else:
@@ -223,7 +223,7 @@ async def delete_documents_batch(
             logger = logging.getLogger(__name__)
             logger.error(f"Error deleting document {document_id}: {str(e)}", exc_info=True)
             errors.append(f"Error deleting document {document_id}")
-    
+
     return {
         "message": f"Successfully deleted {deleted_count} documents",
         "deleted_count": deleted_count,
@@ -239,11 +239,11 @@ async def delete_document(
 ):
     """Delete a document"""
     service = DocumentService(db)
-    success = service.delete_document(document_id, current_user.id)
-    
+    success = await service.delete_document(document_id, current_user.id)
+
     if not success:
         raise HTTPException(status_code=404, detail="Document not found")
-    
+
     return {"message": "Document deleted successfully"}
 
 
@@ -255,18 +255,19 @@ async def export_metadata_csv(
 ):
     """Export metadata for multiple documents as CSV"""
     service = DocumentService(db)
-    return service.export_metadata_csv(request.document_ids, current_user.id)
+    return await service.export_metadata_csv(request.document_ids, current_user.id)
 
 
-@router.post("/export/mets")
-async def export_multiple_mets_xml(
-    request: BatchDeleteRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Export METS XML for multiple documents as ZIP archive"""
-    service = DocumentService(db)
-    return service.export_multiple_mets_xml(request.document_ids, current_user.id)
+# TEMPORARILY DISABLED - Needs refactoring for dual-database architecture
+# @router.post("/export/mets")
+# async def export_multiple_mets_xml(
+#     request: BatchDeleteRequest,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Export METS XML for multiple documents as ZIP archive"""
+#     service = DocumentService(db)
+#     return service.export_multiple_mets_xml(request.document_ids, current_user.id)
 
 
 @router.get("/{document_id}/export/mets")
@@ -277,7 +278,7 @@ async def export_mets_xml(
 ):
     """Export METS XML for a document"""
     service = DocumentService(db)
-    return service.export_mets_xml(document_id, current_user.id)
+    return await service.export_mets_xml(document_id, current_user.id)
 
 
 @router.get("/{document_id}/export/csv")
@@ -288,40 +289,43 @@ async def export_single_document_csv(
 ):
     """Export CSV metadata for a single document"""
     service = DocumentService(db)
-    return service.export_metadata_csv([document_id], current_user.id)
+    return await service.export_metadata_csv([document_id], current_user.id)
 
 
-@router.get("/{document_id}/download/files")
-async def download_document_files(
-    document_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Download all files for a document as ZIP"""
-    service = DocumentService(db)
-    return service.download_document_files(document_id, current_user.id)
+# TEMPORARILY DISABLED - Needs refactoring for dual-database architecture
+# @router.get("/{document_id}/download/files")
+# async def download_document_files(
+#     document_id: int,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Download all files for a document as ZIP"""
+#     service = DocumentService(db)
+#     return service.download_document_files(document_id, current_user.id)
 
 
-@router.get("/{document_id}/download/archive")
-async def download_document_archive(
-    document_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Download complete document archive (metadata + files)"""
-    service = DocumentService(db)
-    return service.download_document_archive(document_id, current_user.id)
+# TEMPORARILY DISABLED - Needs refactoring for dual-database architecture
+# @router.get("/{document_id}/download/archive")
+# async def download_document_archive(
+#     document_id: int,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Download complete document archive (metadata + files)"""
+#     service = DocumentService(db)
+#     return service.download_document_archive(document_id, current_user.id)
 
 
-@router.post("/download/archives")
-async def batch_download_archives(
-    request: BatchDeleteRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Download multiple documents as archives in a single ZIP"""
-    service = DocumentService(db)
-    return service.batch_download_archives(request.document_ids, current_user.id)
+# TEMPORARILY DISABLED - Needs refactoring for dual-database architecture
+# @router.post("/download/archives")
+# async def batch_download_archives(
+#     request: BatchDeleteRequest,
+#     db: Session = Depends(get_db),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Download multiple documents as archives in a single ZIP"""
+#     service = DocumentService(db)
+#     return service.batch_download_archives(request.document_ids, current_user.id)
 
 
 @router.post("/batch", response_model=BatchImportResult)
@@ -400,21 +404,21 @@ async def validate_mets_xml(
     """Validate METS XML for a document against ECO-MiC 1.1 standard"""
     document_service = DocumentService(db)
     validation_service = METSValidationService()
-    
+
     # Get document to ensure user owns it
-    document = document_service.get_document(request.document_id, current_user.id)
+    document = await document_service.get_document(request.document_id, current_user.id)
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
-    
+
     # Generate METS XML for the document
-    mets_xml = document_service.generate_mets_xml_for_validation(request.document_id, current_user.id)
-    
+    mets_xml = await document_service.generate_mets_xml_for_validation(request.document_id, current_user.id)
+
     # Validate the METS XML
     validation_result = await validation_service.validate_mets_xml(
-        mets_xml, 
+        mets_xml,
         f"{document.logical_id}_mets.xml"
     )
-    
+
     return validation_result
 
 
