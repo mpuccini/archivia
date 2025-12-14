@@ -1,50 +1,47 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <header class="bg-white shadow-sm border-b border-gray-200">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <!-- Brand -->
-          <div class="flex items-center">
-            <span class="text-2xl mr-3">🏛️</span>
-            <h1 class="text-xl font-semibold text-gray-900">Archivia</h1>
-          </div>
-          <!-- Navbar Tabs -->
-          <nav class="flex space-x-2">
-            <router-link
-              to="/dashboard"
-              class="px-4 py-2 rounded-md text-sm font-medium"
-              :class="$route.path === '/dashboard' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'"
-            >Dashboard</router-link>
-            <router-link
-              to="/guide"
-              class="px-4 py-2 rounded-md text-sm font-medium"
-              :class="$route.path === '/guide' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-100'"
-            >Guida</router-link>
-          </nav>
-          <!-- User info and actions -->
-          <div class="flex items-center space-x-4">
-            <span class="text-sm text-gray-700">
-              Welcome, <span class="font-medium">{{ authStore.user?.username }}</span>!
-            </span>
-            <button
-              @click="handleLogout"
-              class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-            >
-              Logout
-            </button>
-          </div>
+  <a-layout class="min-h-screen bg-gray-50">
+    <a-layout-header style="background: white; padding: 0; height: auto; line-height: normal;">
+      <div class="flex justify-between items-center h-16 px-6 border-b border-gray-200">
+        <!-- Brand -->
+        <div class="flex items-center">
+          <span class="text-2xl mr-3">🏛️</span>
+          <h1 class="text-xl font-semibold mb-0">Archivia</h1>
+        </div>
+        <!-- Navbar Tabs -->
+        <a-menu
+          mode="horizontal"
+          :selected-keys="[$route.path]"
+          class="flex-1 mx-8 border-0"
+          style="background: transparent; line-height: 64px;"
+        >
+          <a-menu-item key="/dashboard">
+            <router-link to="/dashboard">Dashboard</router-link>
+          </a-menu-item>
+          <a-menu-item key="/guide">
+            <router-link to="/guide">Guida</router-link>
+          </a-menu-item>
+        </a-menu>
+        <!-- User info and actions -->
+        <div class="flex items-center space-x-4">
+          <a-typography-text>
+            Ciao, <strong>{{ authStore.user?.username }}</strong>!
+          </a-typography-text>
+          <a-button
+            type="primary"
+            danger
+            @click="handleLogout"
+          >
+            Esci
+          </a-button>
         </div>
       </div>
-    </header>
+    </a-layout-header>
 
     <!-- Main content -->
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-      <div class="px-4 py-4 sm:px-0">
-        <DocumentsManager />
-      </div>
-    </main>
-  </div>
+    <a-layout-content style="padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%;">
+      <DocumentsManager />
+    </a-layout-content>
+  </a-layout>
 </template>
 
 <script>
@@ -88,3 +85,10 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.ant-layout-header {
+  height: 64px;
+  line-height: 64px;
+}
+</style>
