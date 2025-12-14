@@ -10,7 +10,9 @@
   "dependencies": {
     "@headlessui/vue": "^1.7.23",
     "@tailwindcss/forms": "^0.5.10",
+    "ant-design-vue": "^4.2.6",
     "axios": "^1.5.0",
+    "dayjs": "^1.11.19",
     "marked": "^12.0.2",
     "pinia": "^2.1.6",
     "vue": "^3.3.4",

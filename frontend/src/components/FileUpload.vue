@@ -1,94 +1,105 @@
 <template>
-  <div class="file-upload">
-    <h3>Upload File</h3>
-    
+  <a-card title="Upload File">
     <!-- File Selection -->
-    <div class="upload-section">
-      <input 
-        ref="fileInput"
-        type="file" 
-        @change="handleFileSelect"
+    <a-space direction="vertical" :size="16" style="width: 100%">
+      <a-upload
+        v-model:file-list="fileList"
+        :before-upload="beforeUpload"
         :disabled="isUploading"
-        class="file-input"
         multiple
-      />
-      <button 
-        @click="$refs.fileInput.click()"
-        class="select-btn"
-        :disabled="isUploading"
+        :show-upload-list="false"
       >
-        Select Files
-      </button>
-    </div>
+        <a-button type="primary" :disabled="isUploading" :icon="h(UploadOutlined)">
+          Select Files
+        </a-button>
+      </a-upload>
 
-    <!-- Selected Files -->
-    <div v-if="selectedFiles.length > 0" class="selected-files">
-      <h4>Selected Files:</h4>
-      <div v-for="(file, index) in selectedFiles" :key="index" class="file-item">
-        <div class="file-info">
-          <span class="file-name">{{ file.name }}</span>
-          <span class="file-size">({{ formatFileSize(file.size) }})</span>
-        </div>
-        <button 
-          @click="removeFile(index)"
-          class="remove-btn"
-          :disabled="isUploading"
-        >
-          ×
-        </button>
-      </div>
-    </div>
+      <!-- Selected Files -->
+      <a-list
+        v-if="selectedFiles.length > 0"
+        size="small"
+        :data-source="selectedFiles"
+        bordered
+      >
+        <template #header>
+          <strong>Selected Files:</strong>
+        </template>
+        <template #renderItem="{ item, index }">
+          <a-list-item>
+            <template #actions>
+              <a-button
+                type="text"
+                danger
+                size="small"
+                @click="removeFile(index)"
+                :disabled="isUploading"
+              >
+                ×
+              </a-button>
+            </template>
+            <a-list-item-meta>
+              <template #title>{{ item.name }}</template>
+              <template #description>{{ formatFileSize(item.size) }}</template>
+            </a-list-item-meta>
+          </a-list-item>
+        </template>
+      </a-list>
 
-    <!-- Upload Button -->
-    <div v-if="selectedFiles.length > 0" class="upload-actions">
-      <button 
+      <!-- Upload Button -->
+      <a-button
+        v-if="selectedFiles.length > 0"
+        type="primary"
+        :loading="isUploading"
         @click="startUpload"
-        :disabled="isUploading"
-        class="upload-btn"
+        block
+        size="large"
       >
         {{ isUploading ? 'Uploading...' : `Upload ${selectedFiles.length} File${selectedFiles.length > 1 ? 's' : ''}` }}
-      </button>
-    </div>
+      </a-button>
 
-    <!-- Upload Progress -->
-    <div v-if="isUploading" class="upload-progress">
-      <div v-for="upload in activeUploads" :key="upload.id" class="upload-item">
-        <div class="upload-header">
-          <span class="upload-filename">{{ upload.filename }}</span>
-          <span class="upload-status">{{ upload.status }}</span>
-        </div>
-        <div class="progress-bar">
-          <div 
-            class="progress-fill" 
-            :style="{ width: upload.progress + '%' }"
-          ></div>
-        </div>
-        <div class="upload-details">
-          {{ upload.progress.toFixed(1) }}% - {{ upload.speed }}
-        </div>
-      </div>
-    </div>
+      <!-- Upload Progress -->
+      <a-card v-if="isUploading" size="small" title="Upload Progress">
+        <a-space direction="vertical" :size="12" style="width: 100%">
+          <div v-for="upload in activeUploads" :key="upload.id">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <a-typography-text strong>{{ upload.filename }}</a-typography-text>
+              <a-typography-text type="secondary" style="font-size: 12px;">
+                {{ upload.status }}
+              </a-typography-text>
+            </div>
+            <a-progress
+              :percent="Math.round(upload.progress)"
+              :status="upload.progress === 100 ? 'success' : 'active'"
+              :show-info="true"
+            />
+            <a-typography-text type="secondary" style="font-size: 12px;">
+              {{ upload.speed }}
+            </a-typography-text>
+          </div>
+        </a-space>
+      </a-card>
 
-    <!-- Upload Results -->
-    <div v-if="uploadResults.length > 0" class="upload-results">
-      <h4>Upload Results:</h4>
-      <div v-for="result in uploadResults" :key="result.id" class="result-item">
-        <span class="result-filename">{{ result.filename }}</span>
-        <span 
-          class="result-status"
-          :class="{ 'success': result.success, 'error': !result.success }"
-        >
-          {{ result.success ? '✅ Success' : '❌ Failed' }}
-        </span>
-        <span v-if="!result.success" class="result-error">{{ result.error }}</span>
-      </div>
-    </div>
-  </div>
+      <!-- Upload Results -->
+      <a-card v-if="uploadResults.length > 0" size="small" title="Upload Results">
+        <a-space direction="vertical" :size="8" style="width: 100%">
+          <a-alert
+            v-for="result in uploadResults"
+            :key="result.id"
+            :type="result.success ? 'success' : 'error'"
+            :message="result.filename"
+            :description="result.success ? 'Upload successful' : result.error"
+            show-icon
+          />
+        </a-space>
+      </a-card>
+    </a-space>
+  </a-card>
 </template>
 
 <script>
-import { ref, reactive } from 'vue'
+import { ref, reactive, h } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import { UploadOutlined } from '@ant-design/icons-vue'
 import axios from 'axios'
 
 export default {
@@ -96,13 +107,14 @@ export default {
   setup() {
     const authStore = useAuthStore()
     const selectedFiles = ref([])
+    const fileList = ref([])
     const isUploading = ref(false)
     const activeUploads = reactive([])
     const uploadResults = reactive([])
 
-    const handleFileSelect = (event) => {
-      const files = Array.from(event.target.files)
-      selectedFiles.value = [...selectedFiles.value, ...files]
+    const beforeUpload = (file) => {
+      selectedFiles.value = [...selectedFiles.value, file]
+      return false // Prevent auto upload
     }
 
     const removeFile = (index) => {
@@ -166,14 +178,11 @@ export default {
 
       isUploading.value = false
       selectedFiles.value = []
-      // Clear file input
-      const fileInput = document.querySelector('.file-input')
-      if (fileInput) fileInput.value = ''
+      fileList.value = []
     }
 
     const uploadFile = async (file, tracker) => {
       const CHUNK_SIZE = 64 * 1024 * 1024 // 64MB chunks
-      const isLargeFile = file.size > CHUNK_SIZE
 
       updateUploadProgress(tracker.id, 0, 'Initiating upload...')
 
@@ -183,7 +192,7 @@ export default {
         formData.append('filename', file.name)
         formData.append('file_size', file.size.toString())
         formData.append('content_type', file.type || 'application/octet-stream')
-        
+
         const initResponse = await axios.post(
           `${import.meta.env.VITE_API_URL}/files/upload/initiate`,
           formData,
@@ -236,7 +245,7 @@ export default {
 
     const uploadMultipart = async (file, fileId, chunkSize, totalChunks, tracker) => {
       const parts = []
-      
+
       updateUploadProgress(tracker.id, 5, `Uploading ${totalChunks} chunks...`)
 
       // Upload chunks
@@ -260,8 +269,6 @@ export default {
           }
         )
 
-        // Note: In a real implementation, you'd need to handle the presigned URL
-        // For now, we'll simulate the chunk upload
         parts.push({
           PartNumber: i + 1,
           ETag: `"chunk-${i + 1}"`
@@ -269,15 +276,15 @@ export default {
 
         const progress = Math.round(((i + 1) / totalChunks) * 90) + 5
         updateUploadProgress(
-          tracker.id, 
-          progress, 
+          tracker.id,
+          progress,
           `Chunk ${i + 1}/${totalChunks} uploaded`
         )
       }
 
       // Complete multipart upload
       updateUploadProgress(tracker.id, 95, 'Finalizing upload...')
-      
+
       await axios.post(
         `${import.meta.env.VITE_API_URL}/files/upload/complete/${fileId}`,
         { parts },
@@ -294,182 +301,17 @@ export default {
 
     return {
       selectedFiles,
+      fileList,
       isUploading,
       activeUploads,
       uploadResults,
-      handleFileSelect,
+      beforeUpload,
       removeFile,
       formatFileSize,
-      startUpload
+      startUpload,
+      h,
+      UploadOutlined
     }
   }
 }
 </script>
-
-<style scoped>
-.file-upload {
-  background: white;
-  border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.upload-section {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.file-input {
-  display: none;
-}
-
-.select-btn {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.3s;
-}
-
-.select-btn:hover:not(:disabled) {
-  background: #0056b3;
-}
-
-.select-btn:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-}
-
-.selected-files {
-  margin-bottom: 20px;
-}
-
-.file-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: #f8f9fa;
-  border-radius: 4px;
-  margin-bottom: 8px;
-}
-
-.file-info {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.file-name {
-  font-weight: 500;
-}
-
-.file-size {
-  color: #6c757d;
-  font-size: 12px;
-}
-
-.remove-btn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-}
-
-.upload-btn {
-  background: #28a745;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.upload-btn:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-}
-
-.upload-progress {
-  margin-top: 20px;
-}
-
-.upload-item {
-  margin-bottom: 16px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-radius: 6px;
-}
-
-.upload-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.upload-filename {
-  font-weight: 500;
-}
-
-.upload-status {
-  color: #6c757d;
-  font-size: 12px;
-}
-
-.progress-bar {
-  background: #e9ecef;
-  border-radius: 4px;
-  height: 8px;
-  overflow: hidden;
-  margin-bottom: 4px;
-}
-
-.progress-fill {
-  background: #007bff;
-  height: 100%;
-  transition: width 0.3s;
-}
-
-.upload-details {
-  font-size: 12px;
-  color: #6c757d;
-}
-
-.upload-results {
-  margin-top: 20px;
-}
-
-.result-item {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  border-radius: 4px;
-}
-
-.result-status.success {
-  color: #28a745;
-}
-
-.result-status.error {
-  color: #dc3545;
-}
-
-.result-error {
-  color: #dc3545;
-  font-size: 12px;
-}
-</style>

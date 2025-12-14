@@ -103,9 +103,34 @@ body {
   padding: 16px;
 }
 
-/* Modals - Large, Modern */
+/* Modals - Large, Modern with Backdrop Blur */
 .ant-modal {
   @apply top-8;
+}
+
+/* Backdrop blur effect - works on the overlay wrapper */
+.ant-modal-wrap {
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* Darker overlay for better contrast */
+.ant-modal-mask {
+  background-color: rgba(0, 0, 0, 0.60) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* Custom blur modal class for stronger blur effect */
+.blur-modal .ant-modal-wrap {
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+}
+
+.blur-modal .ant-modal-mask {
+  background-color: rgba(0, 0, 0, 0.65) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
 }
 
 .ant-modal-content {

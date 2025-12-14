@@ -1,250 +1,416 @@
 <template>
-  <div class="space-y-6">
-    <!-- Step 1: File Upload -->
-    <div v-if="currentStep === 1">
-      <h3 class="text-lg font-medium text-gray-900 mb-4">Upload Excel File</h3>
-      <p class="text-sm text-gray-600 mb-6">
-        Upload an Excel file (.xlsx) with document metadata. The first row should contain column headers.
-      </p>
-      
-      <!-- File Upload Area -->
-      <div
-        @drop="handleDrop"
-        @dragover.prevent
-        @dragenter.prevent
-        class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors"
-      >
-        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        <div class="mt-4">
-          <label for="excel-upload" class="cursor-pointer">
-            <span class="text-blue-600 hover:text-blue-500 font-medium">Click to upload</span>
-            <span class="text-gray-500"> or drag and drop</span>
-            <input
-              id="excel-upload"
-              type="file"
-              accept=".xlsx,.xls"
-              @change="handleFileSelect"
-              class="sr-only"
-            />
-          </label>
-          <p class="text-xs text-gray-500 mt-2">Excel files (.xlsx, .xls) up to 10MB</p>
-        </div>
-      </div>
+  <div class="excel-batch-import">
+    <!-- Intestazione -->
+    <div class="form-header">
+      <file-excel-outlined :style="{ fontSize: '32px', color: '#52c41a', marginBottom: '16px' }" />
+      <h1>Importazione Batch da Excel</h1>
+      <p>Carica un file Excel (.xlsx) con i metadati dei documenti per creare più documenti contemporaneamente</p>
+    </div>
 
-      <!-- Selected File -->
-      <div v-if="selectedFile" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <div class="flex items-center">
-          <svg class="h-8 w-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h6l4 4v10a4 4 0 01-4 4z"></path>
-          </svg>
-          <div class="ml-4 flex-1">
-            <p class="text-sm font-medium text-blue-900">{{ selectedFile.name }}</p>
-            <p class="text-sm text-blue-700">{{ formatFileSize(selectedFile.size) }}</p>
-          </div>
-          <button
-            @click="removeFile"
-            class="ml-4 text-blue-400 hover:text-blue-600"
+    <!-- Loading Overlay -->
+    <a-spin :spinning="isProcessing || isCreating" :tip="isProcessing ? 'Elaborazione file Excel...' : 'Creazione documenti...'">
+      <!-- Step 1: File Upload -->
+      <a-card v-if="currentStep === 1" :bordered="false" class="upload-card">
+        <!-- Istruzioni -->
+        <a-alert
+          message="Formato del file Excel"
+          type="info"
+          show-icon
+          style="margin-bottom: 24px"
+        >
+          <template #icon>
+            <inbox-outlined />
+          </template>
+          <template #description>
+            <div>
+              <p>Il file Excel deve contenere una riga di intestazione con i nomi dei campi.</p>
+              <p style="margin-top: 8px;">I campi supportati includono: <strong>logical_id</strong> (obbligatorio), title, archive_name, document_type, creator, subject, description, publisher, date_created, language, format, identifier, rights, coverage, total_pages, notes.</p>
+              <a-button
+                type="link"
+                size="small"
+                @click="downloadTemplate"
+                style="padding-left: 0; margin-top: 8px;"
+              >
+                <template #icon>
+                  <download-outlined />
+                </template>
+                Scarica template di esempio
+              </a-button>
+            </div>
+          </template>
+        </a-alert>
+
+        <!-- File Upload Area -->
+        <a-upload-dragger
+          v-model:file-list="fileList"
+          name="excel_file"
+          accept=".xlsx,.xls"
+          :multiple="false"
+          :before-upload="beforeUpload"
+          :show-upload-list="false"
+          @change="handleFileChange"
+          @drop="handleDrop"
+        >
+          <p class="ant-upload-drag-icon">
+            <file-excel-outlined :style="{ fontSize: '48px', color: '#52c41a' }" />
+          </p>
+          <p class="ant-upload-text" style="font-size: 16px; font-weight: 500;">
+            Trascina il file Excel qui o clicca per sfogliare
+          </p>
+          <p class="ant-upload-hint" style="color: #8c8c8c;">
+            Supporta file Excel (.xlsx, .xls) fino a 10MB
+          </p>
+        </a-upload-dragger>
+
+        <!-- Selected File -->
+        <div v-if="selectedFile" style="margin-top: 24px;">
+          <a-alert
+            type="success"
+            show-icon
           >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+            <template #icon>
+              <check-circle-outlined />
+            </template>
+            <template #message>
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <span style="font-weight: 600;">File Excel Selezionato</span>
+                <a @click="removeFile" style="color: #ff4d4f; font-weight: 500;">
+                  Rimuovi
+                </a>
+              </div>
+            </template>
+            <template #description>
+              <div style="margin-top: 8px;">
+                <p style="font-weight: 500; margin: 0;">{{ selectedFile.name }}</p>
+                <p style="font-size: 12px; color: #8c8c8c; margin: 4px 0 0 0;">{{ formatFileSize(selectedFile.size) }}</p>
+              </div>
+            </template>
+          </a-alert>
         </div>
-      </div>
 
-      <!-- Actions -->
-      <div class="flex justify-between pt-6">
-        <button
-          @click="$emit('cancel')"
-          class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          Cancel
-        </button>
-        <button
-          @click="parseExcelFile"
-          :disabled="!selectedFile || isProcessing"
-          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <svg v-if="isProcessing" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          {{ isProcessing ? 'Processing...' : 'Parse File' }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Step 2: Preview and Confirm -->
-    <div v-if="currentStep === 2">
-      <h3 class="text-lg font-medium text-gray-900 mb-4">Preview Documents</h3>
-      <p class="text-sm text-gray-600 mb-6">
-        Review the {{ parsedDocuments.length }} documents that will be created. You can edit individual fields if needed.
-      </p>
-
-      <!-- Error Messages -->
-      <div v-if="parseErrors.length > 0" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-        <h4 class="text-sm font-medium text-red-800 mb-2">Parsing Issues:</h4>
-        <ul class="text-sm text-red-700 space-y-1">
-          <li v-for="error in parseErrors" :key="error">• {{ error }}</li>
-        </ul>
-      </div>
-
-      <!-- Documents Preview Table -->
-      <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
-        <div class="overflow-x-auto max-h-96">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50 sticky top-0">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Row
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Logical ID
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Archive
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Creator
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="(doc, index) in parsedDocuments" :key="index" :class="doc.hasErrors ? 'bg-red-50' : ''">
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ index + 2 }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  <input
-                    v-model="doc.logical_id"
-                    class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
-                    :class="!doc.logical_id ? 'border-red-300 bg-red-50' : ''"
-                  />
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <input
-                    v-model="doc.title"
-                    class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
-                  />
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <input
-                    v-model="doc.archive_name"
-                    class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
-                  />
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <input
-                    v-model="doc.document_type"
-                    class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
-                  />
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <input
-                    v-model="doc.creator"
-                    class="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
-                  />
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span v-if="!doc.logical_id" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    Missing ID
-                  </span>
-                  <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Ready
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Actions -->
+        <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+          <a-button size="large" @click="$emit('cancel')">
+            <template #icon>
+              <close-outlined />
+            </template>
+            Annulla
+          </a-button>
+          <a-button
+            type="primary"
+            size="large"
+            @click="parseExcelFile"
+            :disabled="!selectedFile"
+            :loading="isProcessing"
+          >
+            <template #icon>
+              <upload-outlined />
+            </template>
+            {{ isProcessing ? 'Elaborazione...' : 'Analizza File' }}
+          </a-button>
         </div>
-      </div>
+      </a-card>
 
-      <!-- Actions -->
-      <div class="flex justify-between pt-6">
-        <button
-          @click="currentStep = 1"
-          class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      <!-- Step 2: Preview and Confirm -->
+      <a-card v-if="currentStep === 2" :bordered="false" class="preview-card">
+        <div class="step-header">
+          <h3>Anteprima Documenti</h3>
+          <p>Rivedi i {{ parsedDocuments.length }} documenti che verranno creati. Puoi modificare i singoli campi se necessario.</p>
+        </div>
+
+        <!-- Error Messages -->
+        <a-alert
+          v-if="parseErrors.length > 0"
+          message="Problemi di Elaborazione"
+          type="warning"
+          show-icon
+          style="margin-bottom: 24px"
         >
-          Back
-        </button>
-        <button
-          @click="createDocuments"
-          :disabled="!canCreateDocuments || isCreating"
-          class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          <template #description>
+            <ul style="margin: 0; padding-left: 20px;">
+              <li v-for="error in parseErrors" :key="error">{{ error }}</li>
+            </ul>
+          </template>
+        </a-alert>
+
+        <!-- Documents Preview Table -->
+        <a-table
+          :columns="tableColumns"
+          :data-source="parsedDocuments"
+          :pagination="{ pageSize: 10 }"
+          :scroll="{ x: 1200 }"
+          :row-class-name="(record) => record.hasErrors ? 'error-row' : ''"
+          style="margin-bottom: 24px"
         >
-          <svg v-if="isCreating" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          {{ isCreating ? 'Creating Documents...' : `Create ${validDocuments.length} Documents` }}
-        </button>
-      </div>
-    </div>
+          <template #bodyCell="{ column, record, index }">
+            <template v-if="column.key === 'row'">
+              {{ index + 2 }}
+            </template>
+            <template v-else-if="column.key === 'logical_id'">
+              <a-input
+                v-model:value="record.logical_id"
+                :status="!record.logical_id ? 'error' : ''"
+                size="small"
+              />
+            </template>
+            <template v-else-if="column.key === 'title'">
+              <a-input v-model:value="record.title" size="small" />
+            </template>
+            <template v-else-if="column.key === 'archive_name'">
+              <a-input v-model:value="record.archive_name" size="small" />
+            </template>
+            <template v-else-if="column.key === 'document_type'">
+              <a-input v-model:value="record.document_type" size="small" />
+            </template>
+            <template v-else-if="column.key === 'creator'">
+              <a-input v-model:value="record.creator" size="small" />
+            </template>
+            <template v-else-if="column.key === 'status'">
+              <a-tag v-if="!record.logical_id" color="error">
+                <template #icon>
+                  <close-circle-outlined />
+                </template>
+                ID Mancante
+              </a-tag>
+              <a-tag v-else color="success">
+                <template #icon>
+                  <check-circle-outlined />
+                </template>
+                Pronto
+              </a-tag>
+            </template>
+          </template>
+        </a-table>
 
-    <!-- Step 3: Results -->
-    <div v-if="currentStep === 3">
-      <h3 class="text-lg font-medium text-gray-900 mb-4">Import Results</h3>
-      
-      <div v-if="importResults.success.length > 0" class="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-        <h4 class="text-sm font-medium text-green-800 mb-2">Successfully Created: {{ importResults.success.length }}</h4>
-        <ul class="text-sm text-green-700 space-y-1 max-h-32 overflow-y-auto">
-          <li v-for="result in importResults.success" :key="result.logical_id">
-            • {{ result.logical_id }} - {{ result.title || 'Untitled' }}
-          </li>
-        </ul>
-      </div>
+        <!-- Actions -->
+        <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+          <a-button size="large" @click="currentStep = 1">
+            <template #icon>
+              <arrow-left-outlined />
+            </template>
+            Indietro
+          </a-button>
+          <a-button
+            type="primary"
+            size="large"
+            @click="createDocuments"
+            :disabled="!canCreateDocuments"
+            :loading="isCreating"
+          >
+            <template #icon>
+              <check-circle-outlined />
+            </template>
+            {{ isCreating ? 'Creazione in corso...' : `Crea ${validDocuments.length} Documenti` }}
+          </a-button>
+        </div>
+      </a-card>
 
-      <div v-if="importResults.errors.length > 0" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-        <h4 class="text-sm font-medium text-red-800 mb-2">Failed to Create: {{ importResults.errors.length }}</h4>
-        <ul class="text-sm text-red-700 space-y-1 max-h-32 overflow-y-auto">
-          <li v-for="error in importResults.errors" :key="error.logical_id">
-            • {{ error.logical_id }}: {{ error.error }}
-          </li>
-        </ul>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex justify-end pt-6">
-        <button
-          @click="$emit('import-complete')"
-          class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      <!-- Step 3: Results -->
+      <a-card v-if="currentStep === 3" :bordered="false" class="results-card">
+        <!-- Success Result -->
+        <a-result
+          v-if="importResults.errors.length === 0"
+          status="success"
+          title="Importazione Completata con Successo!"
+          :sub-title="`${importResults.success.length} documenti sono stati creati correttamente.`"
         >
-          Done
-        </button>
-      </div>
-    </div>
+          <template #icon>
+            <check-circle-outlined />
+          </template>
+          <template #extra>
+            <a-button type="primary" size="large" @click="$emit('import-complete')">
+              Chiudi
+            </a-button>
+          </template>
+        </a-result>
+
+        <!-- Partial Success Result -->
+        <a-result
+          v-else-if="importResults.success.length > 0"
+          status="warning"
+          title="Importazione Completata Parzialmente"
+          :sub-title="`${importResults.success.length} documenti creati con successo, ${importResults.errors.length} errori.`"
+        >
+          <template #icon>
+            <exclamation-circle-outlined />
+          </template>
+        </a-result>
+
+        <!-- Error Result -->
+        <a-result
+          v-else
+          status="error"
+          title="Importazione Fallita"
+          :sub-title="`Nessun documento è stato creato. ${importResults.errors.length} errori riscontrati.`"
+        >
+          <template #icon>
+            <close-circle-outlined />
+          </template>
+        </a-result>
+
+        <!-- Statistics Row -->
+        <a-row :gutter="16" style="margin: 32px 0;" v-if="importResults.success.length > 0 || importResults.errors.length > 0">
+          <a-col :span="12">
+            <a-card>
+              <a-statistic
+                title="Documenti Creati"
+                :value="importResults.success.length"
+                :value-style="{ color: '#52c41a' }"
+              >
+                <template #prefix>
+                  <check-circle-outlined />
+                </template>
+              </a-statistic>
+            </a-card>
+          </a-col>
+          <a-col :span="12">
+            <a-card>
+              <a-statistic
+                title="Errori"
+                :value="importResults.errors.length"
+                :value-style="{ color: '#ff4d4f' }"
+              >
+                <template #prefix>
+                  <close-circle-outlined />
+                </template>
+              </a-statistic>
+            </a-card>
+          </a-col>
+        </a-row>
+
+        <!-- Success List -->
+        <a-alert
+          v-if="importResults.success.length > 0"
+          message="Documenti Creati con Successo"
+          type="success"
+          show-icon
+          style="margin-bottom: 16px"
+        >
+          <template #description>
+            <div style="max-height: 200px; overflow-y: auto;">
+              <ul style="margin: 0; padding-left: 20px;">
+                <li v-for="result in importResults.success" :key="result.logical_id">
+                  <strong>{{ result.logical_id }}</strong> - {{ result.title || 'Senza titolo' }}
+                </li>
+              </ul>
+            </div>
+          </template>
+        </a-alert>
+
+        <!-- Error List -->
+        <a-alert
+          v-if="importResults.errors.length > 0"
+          message="Errori di Creazione"
+          type="error"
+          show-icon
+          style="margin-bottom: 24px"
+        >
+          <template #description>
+            <div style="max-height: 200px; overflow-y: auto;">
+              <ul style="margin: 0; padding-left: 20px;">
+                <li v-for="error in importResults.errors" :key="error.logical_id">
+                  <strong>{{ error.logical_id }}</strong>: {{ error.error }}
+                </li>
+              </ul>
+            </div>
+          </template>
+        </a-alert>
+
+        <!-- Actions -->
+        <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+          <a-button type="primary" size="large" @click="$emit('import-complete')">
+            Chiudi
+          </a-button>
+        </div>
+      </a-card>
+    </a-spin>
   </div>
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, h } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import axios from 'axios'
 import * as XLSX from 'xlsx'
+import { message } from 'ant-design-vue'
+import {
+  FileExcelOutlined,
+  UploadOutlined,
+  InboxOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  CloseOutlined,
+  DownloadOutlined,
+  ArrowLeftOutlined,
+  ExclamationCircleOutlined
+} from '@ant-design/icons-vue'
 
 export default {
   name: 'ExcelBatchImport',
+  components: {
+    FileExcelOutlined,
+    UploadOutlined,
+    InboxOutlined,
+    CheckCircleOutlined,
+    CloseCircleOutlined,
+    CloseOutlined,
+    DownloadOutlined,
+    ArrowLeftOutlined,
+    ExclamationCircleOutlined
+  },
   emits: ['import-complete', 'cancel'],
   setup(props, { emit }) {
     const authStore = useAuthStore()
     const currentStep = ref(1)
     const selectedFile = ref(null)
+    const fileList = ref([])
     const isProcessing = ref(false)
     const isCreating = ref(false)
     const parsedDocuments = ref([])
     const parseErrors = ref([])
     const importResults = ref({ success: [], errors: [] })
+
+    // Table columns for preview
+    const tableColumns = [
+      {
+        title: 'Riga',
+        key: 'row',
+        width: 80,
+        fixed: 'left'
+      },
+      {
+        title: 'ID Logico',
+        key: 'logical_id',
+        width: 150,
+        fixed: 'left'
+      },
+      {
+        title: 'Titolo',
+        key: 'title',
+        width: 200
+      },
+      {
+        title: 'Archivio',
+        key: 'archive_name',
+        width: 150
+      },
+      {
+        title: 'Tipo',
+        key: 'document_type',
+        width: 150
+      },
+      {
+        title: 'Creatore',
+        key: 'creator',
+        width: 150
+      },
+      {
+        title: 'Stato',
+        key: 'status',
+        width: 120,
+        fixed: 'right'
+      }
+    ]
 
     const validDocuments = computed(() => {
       return parsedDocuments.value.filter(doc => doc.logical_id && doc.logical_id.trim())
@@ -262,37 +428,45 @@ export default {
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
     }
 
-    const handleDrop = (e) => {
-      e.preventDefault()
-      const files = e.dataTransfer.files
-      if (files.length > 0) {
-        handleFile(files[0])
-      }
-    }
-
-    const handleFileSelect = (e) => {
-      const files = e.target.files
-      if (files.length > 0) {
-        handleFile(files[0])
-      }
-    }
-
-    const handleFile = (file) => {
+    const beforeUpload = (file) => {
       if (!file.name.match(/\.(xlsx|xls)$/i)) {
-        alert('Please select an Excel file (.xlsx or .xls)')
-        return
+        message.error('Seleziona un file Excel (.xlsx o .xls)')
+        return false
       }
-      
+
       if (file.size > 10 * 1024 * 1024) {
-        alert('File size must be less than 10MB')
-        return
+        message.error('Il file deve essere inferiore a 10MB')
+        return false
       }
 
       selectedFile.value = file
+      return false // Prevent auto upload
+    }
+
+    const handleFileChange = (info) => {
+      // File is handled in beforeUpload
+    }
+
+    const handleDrop = (e) => {
+      // Handled by a-upload-dragger
     }
 
     const removeFile = () => {
       selectedFile.value = null
+      fileList.value = []
+    }
+
+    const downloadTemplate = () => {
+      // Create template Excel file
+      const templateData = [
+        ['logical_id', 'title', 'archive_name', 'document_type', 'creator', 'subject', 'description', 'publisher', 'date_created', 'language', 'format', 'identifier', 'rights', 'coverage', 'total_pages', 'notes'],
+        ['DOC001', 'Esempio Documento 1', 'Archivio Storico', 'Manoscritto', 'Mario Rossi', 'Storia', 'Descrizione del documento', 'Editore Esempio', '2024-01-15', 'ita', 'Cartaceo', 'ID-001', 'Pubblico dominio', 'Italia', '10', 'Note varie']
+      ]
+
+      const ws = XLSX.utils.aoa_to_sheet(templateData)
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Documenti')
+      XLSX.writeFile(wb, 'template_importazione_documenti.xlsx')
     }
 
     const parseExcelFile = async () => {
@@ -304,16 +478,16 @@ export default {
       try {
         const buffer = await selectedFile.value.arrayBuffer()
         const workbook = XLSX.read(buffer, { type: 'buffer' })
-        
+
         // Get the first worksheet
         const sheetName = workbook.SheetNames[0]
         const worksheet = workbook.Sheets[sheetName]
-        
+
         // Convert to JSON with header row
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
-        
+
         if (jsonData.length < 2) {
-          throw new Error('Excel file must contain at least a header row and one data row')
+          throw new Error('Il file Excel deve contenere almeno una riga di intestazione e una riga di dati')
         }
 
         const headers = jsonData[0]
@@ -367,7 +541,7 @@ export default {
           if (hasData) {
             // Validate required fields
             if (!doc.logical_id) {
-              parseErrors.value.push(`Row ${rowIndex + 2}: Missing logical_id`)
+              parseErrors.value.push(`Riga ${rowIndex + 2}: ID logico mancante`)
               doc.hasErrors = true
             }
 
@@ -384,15 +558,16 @@ export default {
         })
 
         if (documents.length === 0) {
-          throw new Error('No valid document data found in the Excel file')
+          throw new Error('Nessun dato documento valido trovato nel file Excel')
         }
 
         parsedDocuments.value = documents
         currentStep.value = 2
+        message.success(`${documents.length} documenti analizzati con successo`)
 
       } catch (error) {
         console.error('Error parsing Excel file:', error)
-        alert('Error parsing Excel file: ' + error.message)
+        message.error('Errore durante l\'elaborazione del file Excel: ' + error.message)
       } finally {
         isProcessing.value = false
       }
@@ -417,17 +592,28 @@ export default {
         importResults.value = response.data
         currentStep.value = 3
 
+        // Show success message
+        if (response.data.errors.length === 0) {
+          message.success(`Tutti i ${response.data.success.length} documenti sono stati creati con successo!`)
+        } else if (response.data.success.length > 0) {
+          message.warning(`${response.data.success.length} documenti creati, ${response.data.errors.length} errori`)
+        } else {
+          message.error('Nessun documento è stato creato a causa di errori')
+        }
+
       } catch (error) {
         console.error('Error creating documents:', error)
-        alert('Error creating documents: ' + (error.response?.data?.detail || error.message))
+        message.error('Errore durante la creazione dei documenti: ' + (error.response?.data?.detail || error.message))
       } finally {
         isCreating.value = false
       }
     }
 
     return {
+      h,
       currentStep,
       selectedFile,
+      fileList,
       isProcessing,
       isCreating,
       parsedDocuments,
@@ -435,13 +621,73 @@ export default {
       importResults,
       validDocuments,
       canCreateDocuments,
+      tableColumns,
       formatFileSize,
+      beforeUpload,
+      handleFileChange,
       handleDrop,
-      handleFileSelect,
       removeFile,
+      downloadTemplate,
       parseExcelFile,
       createDocuments
     }
   }
 }
 </script>
+
+<style scoped>
+.excel-batch-import {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.form-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #262626;
+  margin: 16px 0 8px 0;
+}
+
+.form-header p {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin: 0;
+}
+
+.upload-card,
+.preview-card,
+.results-card {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+}
+
+.step-header {
+  margin-bottom: 24px;
+}
+
+.step-header h3 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #262626;
+  margin: 0 0 8px 0;
+}
+
+.step-header p {
+  font-size: 14px;
+  color: #8c8c8c;
+  margin: 0;
+}
+
+:deep(.error-row) {
+  background-color: #fff2f0;
+}
+
+:deep(.error-row:hover > td) {
+  background-color: #ffebe8 !important;
+}
+</style>
