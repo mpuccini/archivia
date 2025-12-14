@@ -68,7 +68,7 @@ class METSHeader(BaseModel):
 class METSDocumentBase(BaseModel):
     """Base METS document schema"""
     # Schema version
-    schema_version: str = Field(default="1.2", description="ECO-MiC version: 1.1 or 1.2")
+    schema_version: str = Field(default="1.1", description="ECO-MiC version: 1.1 or 1.2")
 
     # Core identifiers
     logical_id: str = Field(..., description="Unique logical identifier")

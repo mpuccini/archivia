@@ -960,7 +960,12 @@ export default {
 
     const exportSelectedMETSXML = async () => {
       if (selectedDocuments.value.length === 0) return
-      
+
+      // For now, export documents one by one since batch endpoint is disabled
+      alert(`⚠️ Batch METS export is currently disabled.\n\nPlease export documents individually for now.\n\nThis feature will be re-enabled in a future update.`)
+      return
+
+      /* DISABLED - Batch export endpoint not yet refactored for dual-database architecture
       try {
         const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/documents/export/mets`, {
           document_ids: selectedDocuments.value
@@ -970,7 +975,7 @@ export default {
           },
           responseType: 'blob'
         })
-        
+
         const blob = new Blob([response.data], { type: 'application/zip' })
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
@@ -978,10 +983,21 @@ export default {
         link.download = 'documents_mets.zip'
         link.click()
         window.URL.revokeObjectURL(url)
+
+        // Show success message
+        alert(`✅ METS XML files exported successfully!\n\n${selectedDocuments.value.length} documents exported as ZIP archive.`)
       } catch (err) {
         console.error('Error exporting METS XML:', err)
-        alert('Failed to export METS XML: ' + (err.response?.data?.detail || err.message))
+
+        // Enhanced error handling
+        if (err.response?.status === 422) {
+          const errorDetail = err.response?.data?.detail || 'METS validation failed for one or more documents'
+          alert(`❌ METS Validation Failed\n\n${errorDetail}`)
+        } else {
+          alert('❌ Failed to export METS XML\n\n' + (err.response?.data?.detail || err.message))
+        }
       }
+      */
     }
 
     const downloadSelectedArchives = async () => {
@@ -1085,29 +1101,45 @@ export default {
         // Find the document in our list to get its logical_id
         const doc = documents.value.find(d => d.id === documentId)
         const logicalId = doc?.logical_id || `document_${documentId}`
-        
+
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/documents/${documentId}/export/mets`, {
           headers: {
             'Authorization': `Bearer ${authStore.token}`
           },
           responseType: 'blob'
         })
-        
+
         const blob = new Blob([response.data], { type: 'application/xml' })
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
-        
+
         // Use logical_id for the filename
         const sanitizedLogicalId = logicalId.replace(/[^a-zA-Z0-9\-_\.]/g, '_')
         const filename = `${sanitizedLogicalId}_mets.xml`
-        
+
         link.download = filename
         link.click()
         window.URL.revokeObjectURL(url)
+
+        // Show success message
+        alert(`✅ METS XML exported successfully!\n\nFile: ${filename}\n\nThe METS file has been validated against ECO-MiC 1.1 standard and passed all compliance checks.`)
       } catch (err) {
         console.error('Error exporting METS XML:', err)
-        alert('Failed to export METS XML: ' + (err.response?.data?.detail || err.message))
+
+        // Enhanced error handling for validation failures
+        if (err.response?.status === 422) {
+          // Validation error - show detailed message
+          const errorDetail = err.response?.data?.detail || 'METS validation failed'
+          alert(`❌ METS Validation Failed\n\n${errorDetail}\n\nPlease fix the issues and try exporting again.`)
+        } else if (err.response?.status === 503) {
+          // Validation service unavailable
+          const errorDetail = err.response?.data?.detail || 'Validation service is unavailable'
+          alert(`⚠️ Validation Service Error\n\n${errorDetail}`)
+        } else {
+          // Other errors
+          alert('❌ Failed to export METS XML\n\n' + (err.response?.data?.detail || err.message))
+        }
       }
     }
 

@@ -21,7 +21,7 @@ class METSDocumentService:
         owner_id: int,
         platform_document_id: int,
         metadata: Dict[str, Any],
-        schema_version: str = "1.2"
+        schema_version: str = "1.1"
     ) -> str:
         """
         Create METS document in MongoDB

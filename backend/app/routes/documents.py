@@ -273,12 +273,22 @@ async def export_metadata_csv(
 @router.get("/{document_id}/export/mets")
 async def export_mets_xml(
     document_id: int,
+    validate: bool = True,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Export METS XML for a document"""
+    """
+    Export METS XML for a document.
+
+    Args:
+        document_id: Document ID to export
+        validate: Whether to validate METS against ECO-MiC 1.1 before export (default: True)
+
+    Returns:
+        METS XML file download
+    """
     service = DocumentService(db)
-    return await service.export_mets_xml(document_id, current_user.id)
+    return await service.export_mets_xml(document_id, current_user.id, validate=validate)
 
 
 @router.get("/{document_id}/export/csv")

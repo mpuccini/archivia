@@ -286,8 +286,8 @@ class DocumentService:
             document_data.dict()
         )
 
-        # Get schema version (default 1.2)
-        schema_version = document_data.schema_version if hasattr(document_data, 'schema_version') else "1.2"
+        # Get schema version (default 1.1)
+        schema_version = document_data.schema_version if hasattr(document_data, 'schema_version') else "1.1"
 
         # Phase 1: PostgreSQL operation (platform metadata)
         def create_postgres_doc() -> int:
@@ -814,8 +814,21 @@ class DocumentService:
             headers={"Content-Disposition": self._make_content_disposition(filename)}
         )
 
-    async def export_mets_xml(self, document_id: int, user_id: int) -> StreamingResponse:
-        """Export dynamically generated METS XML for a single document"""
+    async def export_mets_xml(self, document_id: int, user_id: int, validate: bool = True) -> StreamingResponse:
+        """
+        Export dynamically generated METS XML for a single document.
+
+        Args:
+            document_id: Document ID to export
+            user_id: User ID (for ownership verification)
+            validate: Whether to validate METS against ECO-MiC 1.1 before export (default: True)
+
+        Returns:
+            StreamingResponse with METS XML
+
+        Raises:
+            HTTPException: If document not found or validation fails
+        """
         document = self.db.query(Document).options(
             joinedload(Document.document_files).joinedload(DocumentFile.file)
         ).filter(
@@ -832,6 +845,63 @@ class DocumentService:
         # Generate METS XML dynamically from merged data
         mets_generator = METSEcoMicGenerator()
         mets_xml = mets_generator.generate_mets_xml(document_detail)
+
+        # Optional validation before export
+        if validate:
+            from app.services.mets_validation import METSValidationService
+            validation_service = METSValidationService()
+
+            try:
+                validation_result = await validation_service.validate_mets_xml(
+                    mets_xml,
+                    f"{document.logical_id}_mets.xml"
+                )
+
+                if not validation_result.get('valid', False):
+                    # Block export if validation fails
+                    logger.warning(
+                        f"METS validation failed for document {document.id}: "
+                        f"{validation_result.get('summary', 'Unknown error')}"
+                    )
+
+                    # Prepare detailed error message for user
+                    error_details = validation_result.get('errors', [])
+                    summary = validation_result.get('summary', 'METS validation failed')
+
+                    # Format error message with details
+                    error_message = f"Cannot export: {summary}\n\n"
+
+                    if error_details:
+                        error_message += "Validation errors:\n"
+                        for i, error in enumerate(error_details[:10], 1):  # Limit to first 10 errors
+                            error_msg = error.get('message', 'Unknown error')
+                            error_location = error.get('location', 'Unknown location')
+                            error_message += f"{i}. {error_msg} (at: {error_location})\n"
+
+                        if len(error_details) > 10:
+                            error_message += f"\n... and {len(error_details) - 10} more errors"
+
+                    error_message += "\n\nPlease fix the document metadata and try exporting again."
+
+                    raise HTTPException(
+                        status_code=422,
+                        detail=error_message
+                    )
+                else:
+                    logger.info(f"METS validation passed for document {document.id}")
+            except HTTPException:
+                # Re-raise HTTPException (validation failed)
+                raise
+            except Exception as e:
+                # Validation service error (network, API down, etc.)
+                logger.error(f"METS validation service error for document {document.id}: {e}")
+                # Block export with informative error
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"METS validation service is unavailable. Cannot verify METS compliance. "
+                           f"Error: {str(e)}\n\n"
+                           f"You can retry later or contact support if the issue persists."
+                )
 
         return StreamingResponse(
             io.BytesIO(mets_xml.encode('utf-8')),

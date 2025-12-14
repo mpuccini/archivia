@@ -134,7 +134,7 @@ class DocumentCreate(DocumentBase):
     record_status: Optional[str] = Field("COMPLETE", max_length=20)  # "COMPLETE", "MINIMUM", "REFERENCED"
 
     # METS schema version
-    schema_version: Optional[str] = Field("1.2", pattern=r'^1\.[12]$')  # "1.1" or "1.2"
+    schema_version: Optional[str] = Field("1.1", pattern=r'^1\.[12]$')  # "1.1" or "1.2"
 
     @field_validator('license_url')
     @classmethod
