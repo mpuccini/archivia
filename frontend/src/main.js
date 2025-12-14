@@ -22,6 +22,9 @@ const router = createRouter({
   routes
 })
 
+// Configurazione Ant Design con backdrop blur
+import { ConfigProvider } from 'ant-design-vue'
+
 // Creazione dell'app
 const app = createApp(App)
 const pinia = createPinia()
@@ -29,4 +32,16 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.use(Antd)
+
+// Configurazione globale per modal con blur
+app.provide('antdConfig', {
+  modal: {
+    maskStyle: {
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
+      backgroundColor: 'rgba(0, 0, 0, 0.60)'
+    }
+  }
+})
+
 app.mount('#app')
