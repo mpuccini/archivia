@@ -1,16 +1,19 @@
-from typing import List, Dict
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from typing import List, Dict, Optional
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
+from datetime import date
 
 from app.core.database import get_db
 from app.models.user import User
+from app.models.document import Document
 from app.schemas.document import (
     DocumentCreate, DocumentUpdate, DocumentDetail, DocumentListItem, DocumentUpload
 )
 from app.services.document import DocumentService
 from app.services.mets_validation import METSValidationService
+from app.services.mongodb import mongodb_service, get_mongodb
 from app.utils.mets_generator_ecomic import METSEcoMicGenerator
 from app.routes.auth import get_current_user
 
@@ -150,6 +153,116 @@ async def upload_document(
 
     # Return detailed document
     return await service.get_document(document.id, current_user.id)
+
+
+@router.get("/search")
+async def search_documents(
+    q: Optional[str] = Query(None, description="Full-text search query"),
+    logical_id: Optional[str] = Query(None, description="Filter by logical ID (partial match)"),
+    archive: Optional[str] = Query(None, description="Filter by archive name (partial match)"),
+    date_from: Optional[date] = Query(None, description="Filter by start date"),
+    date_to: Optional[date] = Query(None, description="Filter by end date"),
+    schema_version: Optional[str] = Query(None, description="Filter by METS schema version (1.1 or 1.2)"),
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(20, ge=1, le=100, description="Page size"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Search documents with full-text search and filters
+
+    - **q**: Full-text search across title, description, archive, subjects, agents
+    - **logical_id**: Filter by logical ID (case-insensitive partial match)
+    - **archive**: Filter by archive name (case-insensitive partial match)
+    - **date_from**: Filter documents from this date
+    - **date_to**: Filter documents up to this date
+    - **schema_version**: Filter by METS ECO-MiC version (1.1 or 1.2)
+    - **page**: Page number (1-indexed)
+    - **size**: Number of results per page (max 100)
+
+    Returns paginated results with relevance scoring for text searches.
+    """
+
+    # Build filters dictionary
+    filters = {}
+    if logical_id:
+        filters['logical_id'] = logical_id
+    if archive:
+        filters['archive'] = archive
+    if date_from:
+        filters['date_from'] = date_from.isoformat()
+    if date_to:
+        filters['date_to'] = date_to.isoformat()
+    if schema_version:
+        filters['schema_version'] = schema_version
+
+    # Calculate skip for pagination
+    skip = (page - 1) * size
+
+    # Perform MongoDB search
+    mongo_result = await mongodb_service.search_documents(
+        owner_id=current_user.id,
+        query=q,
+        filters=filters,
+        skip=skip,
+        limit=size
+    )
+
+    mets_docs = mongo_result['items']
+    total = mongo_result['total']
+
+    if not mets_docs:
+        return {
+            "documents": [],
+            "total": 0,
+            "page": page,
+            "size": size,
+            "pages": 0
+        }
+
+    # Fetch PostgreSQL data for matched documents
+    logical_ids = [doc['logical_id'] for doc in mets_docs]
+    pg_docs = db.query(Document).filter(
+        Document.logical_id.in_(logical_ids),
+        Document.owner_id == current_user.id
+    ).all()
+
+    # Create lookup map
+    pg_docs_map = {doc.logical_id: doc for doc in pg_docs}
+
+    # Merge MongoDB metadata with PostgreSQL platform data
+    results = []
+    for mets_doc in mets_docs:
+        pg_doc = pg_docs_map.get(mets_doc['logical_id'])
+        if pg_doc:
+            # Count files
+            file_count = len(pg_doc.document_files) if hasattr(pg_doc, 'document_files') else 0
+
+            results.append({
+                "id": pg_doc.id,
+                "logical_id": mets_doc['logical_id'],
+                "title": mets_doc.get('title', ''),
+                "description": mets_doc.get('description', ''),
+                "conservative_id": mets_doc.get('conservative_id', ''),
+                "archive_name": mets_doc.get('archive', {}).get('name', ''),
+                "fund_name": mets_doc.get('archive', {}).get('fund_name', ''),
+                "schema_version": mets_doc.get('schema_version', ''),
+                "created_at": pg_doc.created_at,
+                "updated_at": pg_doc.updated_at,
+                "file_count": file_count,
+                "search_score": mets_doc.get('search_score', 0) if q else None
+            })
+
+    # Calculate total pages
+    total_pages = (total + size - 1) // size if total > 0 else 0
+
+    return {
+        "documents": results,
+        "total": total,
+        "page": page,
+        "size": size,
+        "pages": total_pages
+    }
 
 
 @router.get("/", response_model=List[DocumentListItem])

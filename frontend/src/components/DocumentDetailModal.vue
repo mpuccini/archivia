@@ -434,8 +434,8 @@
                     </a-typography-text>
 
                     <div class="text-xs text-gray-500 space-y-1">
-                      <div v-if="file.camera_manufacturer">
-                        📷 {{ file.camera_manufacturer }} {{ file.camera_model }}
+                      <div v-if="file.scanner_manufacturer">
+                        📷 {{ file.scanner_manufacturer }} {{ file.scanner_model_name }}
                       </div>
                       <div>📏 {{ file.image_width }}x{{ file.image_height }}</div>
                       <div>💾 {{ formatFileSize(file.file_size) }}</div>
@@ -497,27 +497,52 @@
             </a-descriptions-item>
           </a-descriptions>
 
-          <a-descriptions v-if="hasMetadata(selectedFile)" title="Metadati Tecnici" bordered :column="1" size="small">
+          <a-descriptions v-if="hasMetadata(selectedFile)" title="Metadati Tecnici (MIX)" bordered :column="1" size="small">
+            <a-descriptions-item label="Formato" v-if="selectedFile.format_name">
+              {{ selectedFile.format_name }}
+            </a-descriptions-item>
             <a-descriptions-item label="Spazio Colore" v-if="selectedFile.color_space">
               {{ selectedFile.color_space }}
             </a-descriptions-item>
-            <a-descriptions-item label="Bit per Pixel" v-if="selectedFile.bits_per_sample">
+            <a-descriptions-item label="Bit per Campione" v-if="selectedFile.bits_per_sample">
               {{ selectedFile.bits_per_sample }}
+            </a-descriptions-item>
+            <a-descriptions-item label="Campioni per Pixel" v-if="selectedFile.samples_per_pixel">
+              {{ selectedFile.samples_per_pixel }}
+            </a-descriptions-item>
+            <a-descriptions-item label="Compressione" v-if="selectedFile.compression_scheme">
+              {{ selectedFile.compression_scheme }}
             </a-descriptions-item>
             <a-descriptions-item label="DPI" v-if="selectedFile.x_sampling_frequency">
               {{ selectedFile.x_sampling_frequency }} x {{ selectedFile.y_sampling_frequency }}
+              <span v-if="selectedFile.sampling_frequency_unit"> {{ selectedFile.sampling_frequency_unit }}</span>
+            </a-descriptions-item>
+            <a-descriptions-item label="Byte Order" v-if="selectedFile.byte_order">
+              {{ selectedFile.byte_order }}
+            </a-descriptions-item>
+            <a-descriptions-item label="Orientamento" v-if="selectedFile.orientation">
+              {{ selectedFile.orientation }}
+            </a-descriptions-item>
+            <a-descriptions-item label="Profilo ICC" v-if="selectedFile.icc_profile_name">
+              {{ selectedFile.icc_profile_name }}
+            </a-descriptions-item>
+            <a-descriptions-item label="Data Creazione" v-if="selectedFile.date_time_created">
+              {{ formatDate(selectedFile.date_time_created) }}
             </a-descriptions-item>
           </a-descriptions>
 
           <a-descriptions v-if="hasCameraMetadata(selectedFile)" title="Info Fotocamera/Scanner" bordered :column="1" size="small">
-            <a-descriptions-item label="Produttore" v-if="selectedFile.camera_manufacturer">
-              {{ selectedFile.camera_manufacturer }}
+            <a-descriptions-item label="Produttore" v-if="selectedFile.scanner_manufacturer">
+              {{ selectedFile.scanner_manufacturer }}
             </a-descriptions-item>
-            <a-descriptions-item label="Modello" v-if="selectedFile.camera_model">
-              {{ selectedFile.camera_model }}
+            <a-descriptions-item label="Modello" v-if="selectedFile.scanner_model_name">
+              {{ selectedFile.scanner_model_name }}
             </a-descriptions-item>
-            <a-descriptions-item label="Software" v-if="selectedFile.scanner_software">
-              {{ selectedFile.scanner_software }}
+            <a-descriptions-item label="Software" v-if="selectedFile.scanning_software_name">
+              {{ selectedFile.scanning_software_name }}
+            </a-descriptions-item>
+            <a-descriptions-item label="Versione Software" v-if="selectedFile.scanning_software_version">
+              {{ selectedFile.scanning_software_version }}
             </a-descriptions-item>
           </a-descriptions>
         </div>
@@ -972,6 +997,14 @@ export default {
     }
 
     const isImageFile = (file) => {
+      // Escludi file testuali anche se hanno content_type image/*
+      const textExtensions = ['.xml', '.csv', '.txt', '.log', '.json', '.html', '.css', '.js']
+      const hasTextExtension = textExtensions.some(ext => file.filename?.toLowerCase().endsWith(ext))
+
+      if (hasTextExtension) {
+        return false
+      }
+
       return file.content_type?.startsWith('image/')
     }
 
@@ -980,11 +1013,23 @@ export default {
     }
 
     const hasMetadata = (file) => {
-      return file.color_space || file.bits_per_sample || file.x_sampling_frequency
+      return file.color_space ||
+             file.bits_per_sample ||
+             file.x_sampling_frequency ||
+             file.samples_per_pixel ||
+             file.compression_scheme ||
+             file.sampling_frequency_unit ||
+             file.format_name ||
+             file.byte_order ||
+             file.orientation ||
+             file.icc_profile_name
     }
 
     const hasCameraMetadata = (file) => {
-      return file.camera_manufacturer || file.camera_model || file.scanner_software
+      return file.scanner_manufacturer ||
+             file.scanner_model_name ||
+             file.scanning_software_name ||
+             file.scanning_software_version
     }
 
     const getCategoryLabel = (category) => {

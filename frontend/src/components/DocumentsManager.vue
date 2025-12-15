@@ -46,6 +46,151 @@
       </div>
     </div>
 
+    <!-- Search Bar with Advanced Filters -->
+    <a-card class="search-card">
+      <a-space direction="vertical" :size="16" style="width: 100%;">
+        <!-- Main Search Input -->
+        <a-input-search
+          v-model:value="searchQuery"
+          placeholder="Cerca documenti per titolo, descrizione, archivio, soggetti..."
+          size="large"
+          :loading="searching"
+          @search="handleSearch"
+          @change="onSearchChange"
+          allow-clear
+        >
+          <template #prefix>
+            <SearchOutlined />
+          </template>
+          <template #enterButton>
+            <a-button type="primary" :loading="searching">
+              Cerca
+            </a-button>
+          </template>
+        </a-input-search>
+
+        <!-- Advanced Filters Toggle -->
+        <div class="flex items-center justify-between">
+          <a-button
+            type="link"
+            @click="showFilters = !showFilters"
+            size="small"
+          >
+            <FilterOutlined />
+            {{ showFilters ? 'Nascondi Filtri Avanzati' : 'Mostra Filtri Avanzati' }}
+          </a-button>
+
+          <a-button
+            v-if="hasActiveFilters"
+            type="link"
+            danger
+            size="small"
+            @click="clearFilters"
+          >
+            <CloseCircleOutlined />
+            Cancella Filtri
+          </a-button>
+        </div>
+
+        <!-- Advanced Filters Panel -->
+        <a-collapse v-if="showFilters" :bordered="false" class="filters-collapse">
+          <a-collapse-panel key="filters" header="Filtri Avanzati" :show-arrow="false">
+            <a-form layout="vertical">
+              <a-row :gutter="16">
+                <a-col :xs="24" :sm="12" :md="8">
+                  <a-form-item label="ID Logico">
+                    <a-input
+                      v-model:value="filters.logical_id"
+                      placeholder="es. DOC001"
+                      allow-clear
+                    />
+                  </a-form-item>
+                </a-col>
+
+                <a-col :xs="24" :sm="12" :md="8">
+                  <a-form-item label="Archivio">
+                    <a-input
+                      v-model:value="filters.archive"
+                      placeholder="es. Archivio di Stato"
+                      allow-clear
+                    />
+                  </a-form-item>
+                </a-col>
+
+                <a-col :xs="24" :sm="12" :md="8">
+                  <a-form-item label="Versione METS">
+                    <a-select
+                      v-model:value="filters.schema_version"
+                      placeholder="Tutte le versioni"
+                      allow-clear
+                    >
+                      <a-select-option value="">Tutte</a-select-option>
+                      <a-select-option value="1.1">ECO-MiC 1.1</a-select-option>
+                      <a-select-option value="1.2">ECO-MiC 1.2</a-select-option>
+                    </a-select>
+                  </a-form-item>
+                </a-col>
+              </a-row>
+
+              <a-row :gutter="16">
+                <a-col :xs="24" :sm="12">
+                  <a-form-item label="Data Da">
+                    <a-date-picker
+                      v-model:value="filters.date_from"
+                      placeholder="Seleziona data inizio"
+                      style="width: 100%;"
+                      format="YYYY-MM-DD"
+                    />
+                  </a-form-item>
+                </a-col>
+
+                <a-col :xs="24" :sm="12">
+                  <a-form-item label="Data A">
+                    <a-date-picker
+                      v-model:value="filters.date_to"
+                      placeholder="Seleziona data fine"
+                      style="width: 100%;"
+                      format="YYYY-MM-DD"
+                    />
+                  </a-form-item>
+                </a-col>
+              </a-row>
+
+              <a-row>
+                <a-col :span="24">
+                  <a-space>
+                    <a-button type="primary" @click="handleSearch" :loading="searching">
+                      <FilterOutlined />
+                      Applica Filtri
+                    </a-button>
+                    <a-button @click="clearFilters">
+                      Cancella
+                    </a-button>
+                  </a-space>
+                </a-col>
+              </a-row>
+            </a-form>
+          </a-collapse-panel>
+        </a-collapse>
+
+        <!-- Search Results Info -->
+        <div v-if="isSearchActive" class="flex items-center justify-between bg-blue-50 p-3 rounded">
+          <div>
+            <span class="font-medium text-blue-900">
+              {{ totalDocuments }} {{ totalDocuments === 1 ? 'risultato trovato' : 'risultati trovati' }}
+            </span>
+            <span v-if="searchQuery" class="text-sm text-blue-700 ml-2">
+              per "{{ searchQuery }}"
+            </span>
+          </div>
+          <a-button type="link" size="small" @click="clearSearch">
+            <CloseCircleOutlined />
+            Cancella Ricerca
+          </a-button>
+        </div>
+      </a-space>
+    </a-card>
+
     <!-- Selection Actions Bar -->
     <div v-if="selectedDocuments.length > 0" class="bg-blue-50 border border-blue-200 rounded-lg p-4">
       <div class="flex items-center justify-between">
@@ -324,7 +469,10 @@ import {
   UploadOutlined,
   EyeOutlined,
   FileZipOutlined,
-  ExportOutlined
+  ExportOutlined,
+  SearchOutlined,
+  FilterOutlined,
+  CloseCircleOutlined
 } from '@ant-design/icons-vue'
 import DocumentUploadForm from './DocumentUploadForm.vue'
 import DocumentDetailModal from './DocumentDetailModal.vue'
@@ -354,7 +502,10 @@ export default {
     UploadOutlined,
     EyeOutlined,
     FileZipOutlined,
-    ExportOutlined
+    ExportOutlined,
+    SearchOutlined,
+    FilterOutlined,
+    CloseCircleOutlined
   },
   setup() {
     const authStore = useAuthStore()
@@ -378,6 +529,19 @@ export default {
     const totalPages = ref(1)
     const totalDocuments = ref(0)
     const pageSize = 20
+
+    // Search state
+    const searchQuery = ref('')
+    const searching = ref(false)
+    const showFilters = ref(false)
+    const isSearchActive = ref(false)
+    const filters = reactive({
+      logical_id: '',
+      archive: '',
+      date_from: null,
+      date_to: null,
+      schema_version: ''
+    })
 
     // Stile per sfondo sfocato delle modali
     const modalMaskStyle = {
@@ -464,6 +628,14 @@ export default {
       showTotal: (total, range) => `Mostrando ${range[0]}-${range[1]} di ${total} documenti`
     }))
 
+    const hasActiveFilters = computed(() => {
+      return filters.logical_id ||
+             filters.archive ||
+             filters.date_from ||
+             filters.date_to ||
+             filters.schema_version
+    })
+
     const loadDocuments = async () => {
       console.log('[DocumentsManager] loadDocuments called, currentPage:', currentPage.value)
       loading.value = true
@@ -518,6 +690,91 @@ export default {
 
     const handleTableChange = (pag) => {
       currentPage.value = pag.current
+      loadDocuments()
+    }
+
+    // Search functions
+    const handleSearch = async () => {
+      searching.value = true
+      isSearchActive.value = true
+      currentPage.value = 1
+
+      try {
+        // Build query parameters
+        const params = {
+          page: currentPage.value,
+          size: pageSize
+        }
+
+        if (searchQuery.value) {
+          params.q = searchQuery.value
+        }
+
+        if (filters.logical_id) {
+          params.logical_id = filters.logical_id
+        }
+
+        if (filters.archive) {
+          params.archive = filters.archive
+        }
+
+        if (filters.date_from) {
+          params.date_from = filters.date_from.format('YYYY-MM-DD')
+        }
+
+        if (filters.date_to) {
+          params.date_to = filters.date_to.format('YYYY-MM-DD')
+        }
+
+        if (filters.schema_version) {
+          params.schema_version = filters.schema_version
+        }
+
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/documents/search`,
+          {
+            params,
+            headers: {
+              'Authorization': `Bearer ${authStore.token}`
+            }
+          }
+        )
+
+        documents.value = response.data.documents || []
+        totalDocuments.value = response.data.total || 0
+        totalPages.value = response.data.pages || 1
+
+        message.success(`${totalDocuments.value} ${totalDocuments.value === 1 ? 'risultato trovato' : 'risultati trovati'}`)
+      } catch (err) {
+        console.error('Search error:', err)
+        message.error('Errore durante la ricerca: ' + (err.response?.data?.detail || err.message))
+        documents.value = []
+        totalDocuments.value = 0
+      } finally {
+        searching.value = false
+      }
+    }
+
+    const onSearchChange = () => {
+      // Auto-search quando si pulisce il campo
+      if (!searchQuery.value && isSearchActive.value) {
+        clearSearch()
+      }
+    }
+
+    const clearFilters = () => {
+      filters.logical_id = ''
+      filters.archive = ''
+      filters.date_from = null
+      filters.date_to = null
+      filters.schema_version = ''
+    }
+
+    const clearSearch = () => {
+      searchQuery.value = ''
+      clearFilters()
+      isSearchActive.value = false
+      currentPage.value = 1
       loadDocuments()
     }
 
@@ -901,6 +1158,19 @@ export default {
       deleting,
       currentPage,
       totalPages,
+      totalDocuments,
+      // Search
+      searchQuery,
+      searching,
+      showFilters,
+      isSearchActive,
+      filters,
+      hasActiveFilters,
+      handleSearch,
+      onSearchChange,
+      clearFilters,
+      clearSearch,
+      // Table & UI
       columns,
       rowSelection,
       pagination,

@@ -46,7 +46,26 @@
 
           <a-typography-title :level="3">Funzionalità principali</a-typography-title>
 
-          <a-typography-title :level="4">1. Gestione Documenti</a-typography-title>
+          <a-typography-title :level="4">1. Ricerca Documenti</a-typography-title>
+          <a-typography-paragraph>
+            <ul>
+              <li><strong>Ricerca semplice:</strong> Utilizza la barra di ricerca principale per cercare documenti per titolo, descrizione, archivio, soggetti, agenti e altro</li>
+              <li><strong>Ricerca full-text:</strong> Il sistema utilizza MongoDB con stemming italiano (es. "archivio" trova anche "archivi")</li>
+              <li><strong>Filtri avanzati:</strong> Clicca sull'icona filtro per espandere il pannello con filtri aggiuntivi:
+                <ul>
+                  <li><strong>ID Logico:</strong> Ricerca parziale sull'identificativo logico del documento</li>
+                  <li><strong>Archivio:</strong> Filtra per nome dell'archivio di conservazione</li>
+                  <li><strong>Versione METS:</strong> Seleziona la versione dello standard ECO-MiC (1.1 o 1.2)</li>
+                  <li><strong>Range di date:</strong> Filtra documenti per periodo temporale (data inizio e data fine)</li>
+                </ul>
+              </li>
+              <li><strong>Ricerca combinata:</strong> Combina la ricerca full-text con i filtri per risultati più precisi</li>
+              <li><strong>Risultati ordinati:</strong> I risultati sono ordinati per rilevanza (se ricerca full-text) o per data di creazione</li>
+              <li><strong>Cancella ricerca:</strong> Usa il pulsante "Cancella Ricerca" per tornare alla lista completa dei documenti</li>
+            </ul>
+          </a-typography-paragraph>
+
+          <a-typography-title :level="4">2. Gestione Documenti</a-typography-title>
           <a-typography-paragraph>
             <ul>
               <li><strong>Creazione singola:</strong> Utilizza il pulsante "Nuovo Documento" per creare un documento con metadati completi</li>
@@ -56,7 +75,7 @@
             </ul>
           </a-typography-paragraph>
 
-          <a-typography-title :level="4">2. Caricamento File</a-typography-title>
+          <a-typography-title :level="4">3. Caricamento File</a-typography-title>
           <a-typography-paragraph>
             <ul>
               <li><strong>Upload singolo:</strong> Carica un'immagine per un documento specifico</li>
@@ -65,16 +84,16 @@
             </ul>
           </a-typography-paragraph>
 
-          <a-typography-title :level="4">3. Formati Supportati</a-typography-title>
+          <a-typography-title :level="4">4. Formati Supportati</a-typography-title>
           <a-typography-paragraph>
             <ul>
               <li><strong>Immagini:</strong> JPEG, PNG, TIFF</li>
-              <li><strong>RAW:</strong> DNG (Adobe Digital Negative) fino a 80GB</li>
+              <li><strong>RAW:</strong> DNG (Adobe Digital Negative) fino a 80GB con generazione automatica thumbnail</li>
               <li><strong>Documenti:</strong> PDF</li>
             </ul>
           </a-typography-paragraph>
 
-          <a-typography-title :level="4">4. Export METS</a-typography-title>
+          <a-typography-title :level="4">5. Export METS</a-typography-title>
           <a-typography-paragraph>
             <ul>
               <li><strong>Export singolo:</strong> Esporta il METS XML di un singolo documento (con validazione ECO-MiC 1.1)</li>
@@ -82,7 +101,7 @@
             </ul>
           </a-typography-paragraph>
 
-          <a-typography-title :level="4">5. Standard METS ECO-MiC 1.1</a-typography-title>
+          <a-typography-title :level="4">6. Standard METS ECO-MiC 1.1</a-typography-title>
           <a-typography-paragraph>
             Il sistema genera automaticamente file METS conformi allo standard ECO-MiC 1.1 dell'ICCU (Istituto Centrale per il Catalogo Unico).
             La validazione viene eseguita tramite il servizio ufficiale prima dell'export.

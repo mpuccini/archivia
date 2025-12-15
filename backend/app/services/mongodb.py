@@ -61,6 +61,41 @@ class MongoDBService:
         # Index on created_at for sorting
         await mets_collection.create_index([("created_at", -1)])
 
+        # Index on temporal date fields
+        await mets_collection.create_index("temporal.date_from")
+        await mets_collection.create_index("temporal.date_to")
+
+        # Full-text search index with Italian language support
+        # Weighted fields: title (highest), description, archive fields, subjects, agents
+        await mets_collection.create_index(
+            [
+                ("title", "text"),
+                ("description", "text"),
+                ("conservative_id", "text"),
+                ("archive.name", "text"),
+                ("archive.fund_name", "text"),
+                ("archive.series_name", "text"),
+                ("subjects", "text"),
+                ("location", "text"),
+                ("agents.producer.name", "text"),
+                ("agents.creator.name", "text")
+            ],
+            name="fulltext_search_idx",
+            weights={
+                "title": 10,
+                "conservative_id": 8,
+                "description": 5,
+                "archive.name": 3,
+                "archive.fund_name": 3,
+                "subjects": 3,
+                "agents.creator.name": 2,
+                "agents.producer.name": 2,
+                "location": 1,
+                "archive.series_name": 1
+            },
+            default_language="italian"
+        )
+
         logger.info("MongoDB indexes created successfully")
 
     async def create_mets_document(self, document_data: Dict[str, Any]) -> str:
@@ -196,6 +231,116 @@ class MongoDBService:
         except Exception as e:
             logger.error(f"Error listing METS documents for user {owner_id}: {e}")
             return []
+
+    async def search_documents(
+        self,
+        owner_id: int,
+        query: Optional[str] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        skip: int = 0,
+        limit: int = 20
+    ) -> Dict[str, Any]:
+        """
+        Search METS documents with full-text search and filters
+
+        Args:
+            owner_id: User ID
+            query: Full-text search query
+            filters: Dictionary of filters (logical_id, archive, date_from, date_to, schema_version)
+            skip: Number of documents to skip (pagination)
+            limit: Maximum number of documents to return
+
+        Returns:
+            Dictionary with 'items' (list of documents), 'total' (total count), and metadata
+        """
+        try:
+            mets_collection = self.async_db.mets_documents
+            filters = filters or {}
+
+            # Build MongoDB filter
+            match_filter = {"owner_id": owner_id}
+
+            # Full-text search
+            if query:
+                match_filter["$text"] = {"$search": query}
+
+            # Additional filters
+            if filters.get('logical_id'):
+                match_filter["logical_id"] = {
+                    "$regex": filters['logical_id'],
+                    "$options": "i"
+                }
+
+            if filters.get('archive'):
+                match_filter["archive.name"] = {
+                    "$regex": filters['archive'],
+                    "$options": "i"
+                }
+
+            if filters.get('schema_version'):
+                match_filter["schema_version"] = filters['schema_version']
+
+            # Date range filters
+            if filters.get('date_from') or filters.get('date_to'):
+                temporal_filter = {}
+                if filters.get('date_from'):
+                    temporal_filter["$gte"] = filters['date_from']
+                if filters.get('date_to'):
+                    temporal_filter["$lte"] = filters['date_to']
+
+                if temporal_filter:
+                    match_filter["temporal.date_from"] = temporal_filter
+
+            # Build aggregation pipeline
+            pipeline = [
+                {"$match": match_filter}
+            ]
+
+            # Add text score if full-text search
+            if query:
+                pipeline.append({
+                    "$addFields": {
+                        "search_score": {"$meta": "textScore"}
+                    }
+                })
+                pipeline.append({"$sort": {"search_score": -1}})
+            else:
+                # Sort by created_at if no text search
+                pipeline.append({"$sort": {"created_at": -1}})
+
+            # Get total count
+            count_pipeline = pipeline.copy()
+            count_pipeline.append({"$count": "total"})
+            count_result = await mets_collection.aggregate(count_pipeline).to_list(1)
+            total = count_result[0]['total'] if count_result else 0
+
+            # Add pagination
+            pipeline.append({"$skip": skip})
+            pipeline.append({"$limit": limit})
+
+            # Execute search
+            cursor = mets_collection.aggregate(pipeline)
+            documents = await cursor.to_list(length=limit)
+
+            # Convert ObjectIds to strings
+            for doc in documents:
+                doc['_id'] = str(doc['_id'])
+
+            return {
+                "items": documents,
+                "total": total,
+                "skip": skip,
+                "limit": limit
+            }
+
+        except Exception as e:
+            logger.error(f"Error searching METS documents: {e}")
+            return {
+                "items": [],
+                "total": 0,
+                "skip": skip,
+                "limit": limit
+            }
 
 
 # Global instance
