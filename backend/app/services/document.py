@@ -28,6 +28,7 @@ from app.utils.mets_generator_ecomic import METSEcoMicGenerator
 from app.utils.file_validator import validate_file_type_and_size, validate_filename
 from app.utils.image_metadata import extract_image_metadata
 from app.utils.file_categorizer import FileCategorizer
+from app.utils.metadata_parser import MetadataParser
 
 
 class DocumentService:
@@ -1198,17 +1199,47 @@ class DocumentService:
                     # Each file_info now has the 'category' field added by categorizer
                     files_with_categories.append(file_info)
 
-            # Create document metadata
+            # Extract metadata from metadata folder if present
+            extracted_metadata = MetadataParser.extract_metadata_from_folder(file_list)
+
+            if extracted_metadata:
+                logger.info(f"Extracted {len(extracted_metadata)} metadata fields from metadata folder")
+                logger.debug(f"Extracted metadata: {extracted_metadata}")
+            else:
+                logger.info("No metadata found in metadata folder")
+                extracted_metadata = {}
+
+            # Merge metadata: user-provided parameters override extracted metadata
+            # Start with extracted metadata as base
+            merged_metadata = extracted_metadata.copy()
+
+            # Override with explicitly provided parameters (if not None)
+            if title is not None:
+                merged_metadata['title'] = title
+            if description is not None:
+                merged_metadata['description'] = description
+            if conservative_id is not None:
+                merged_metadata['conservative_id'] = conservative_id
+            if conservative_id_authority is not None:
+                merged_metadata['conservative_id_authority'] = conservative_id_authority
+            if archive_name is not None:
+                merged_metadata['archive_name'] = archive_name
+            if archive_contact is not None:
+                merged_metadata['archive_contact'] = archive_contact
+            if document_type is not None:
+                merged_metadata['document_type'] = document_type
+
+            # Merge additional_metadata (user-provided overrides extracted)
+            for key, value in additional_metadata.items():
+                if value is not None:
+                    merged_metadata[key] = value
+
+            logger.info(f"Final merged metadata has {len(merged_metadata)} fields")
+
+            # Create document metadata with merged data
             doc_data = DocumentCreate(
                 logical_id=logical_id,
-                title=title,
-                description=description,
-                conservative_id=conservative_id,
-                conservative_id_authority=conservative_id_authority,
-                archive_name=archive_name,
-                archive_contact=archive_contact,
-                document_type=document_type,
-                **additional_metadata
+                **merged_metadata
             )
 
             # Phase 1: Create document (uses TransactionCoordinator internally)
