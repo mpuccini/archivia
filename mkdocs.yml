@@ -1,0 +1,68 @@
+site_name: Archivia Documentation
+site_description: Sistema di gestione documentale per archivi digitali METS ECO-MiC
+site_author: Archivia Project
+site_url: https://your-org.github.io/archivia
+
+theme:
+  name: material
+  language: it
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  - Changelog: CHANGELOG.md
+  - Architettura:
+    - Panoramica: architecture/overview.md
+    - Database: architecture/database.md
+    - Backend: architecture/backend.md
+    - Frontend: architecture/frontend.md
+    - Deployment: architecture/deployment.md
+  - API:
+    - Panoramica: api/overview.md
+    - Documents API: api/documents.md
+    - Files API: api/files.md
+    - Authentication API: api/authentication.md
+  - Guide:
+    - Guida Utente: guides/user-guide.md
+    - Guida Sviluppatore: guides/developer-guide.md
+    - METS ECO-MiC: guides/mets-ecomic.md
+    - Deploy Produzione: guides/production-deploy.md
+  - Storia:
+    - Implementazioni: history/implementations.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - admonition
+  - tables
+  - attr_list
+  - md_in_html
+
+plugins:
+  - search:
+      lang: it
