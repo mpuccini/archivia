@@ -4,7 +4,7 @@ Cronologia completa degli interventi e delle modifiche apportate al progetto Arc
 
 ---
 
-## [2.0.0] - 2024-12-15
+## [2.0.0] - 2025-12-15
 
 ### Aggiunte
 
@@ -70,7 +70,7 @@ Cronologia completa degli interventi e delle modifiche apportate al progetto Arc
 
 ---
 
-## [1.2.0] - 2024-11 (Data Approssimativa)
+## [1.2.0] - 2025-11 (Data Approssimativa)
 
 ### Aggiunte
 
@@ -127,7 +127,7 @@ Cronologia completa degli interventi e delle modifiche apportate al progetto Arc
 
 ---
 
-## [1.1.0] - 2024-10 (Data Approssimativa)
+## [1.1.0] - 2025-10 (Data Approssimativa)
 
 ### Aggiunte
 
@@ -159,7 +159,7 @@ Cronologia completa degli interventi e delle modifiche apportate al progetto Arc
 
 ---
 
-## [1.0.0] - 2024-09 (Data Approssimativa)
+## [1.0.0] - 2025-09 (Data Approssimativa)
 
 ### Versione Iniziale
 
@@ -194,10 +194,10 @@ Le versioni seguono [Semantic Versioning](https://semver.org/):
 
 ## Date Importanti
 
-- **15 Dicembre 2024**: Ricerca MongoDB, Import Metadati, Migrazione Ant Design
-- **Novembre 2024**: Architettura dual-database, METS ECO-MiC 1.1
-- **Ottobre 2024**: Sistema base, CRUD, File management
-- **Settembre 2024**: Inizializzazione progetto
+- **15 Dicembre 2025**: Ricerca MongoDB, Import Metadati, Migrazione Ant Design
+- **Novembre 2025**: Architettura dual-database, METS ECO-MiC 1.1
+- **Ottobre 2025**: Sistema base, CRUD, File management
+- **Settembre 2025**: Inizializzazione progetto
 
 ---
 

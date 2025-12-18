@@ -168,8 +168,8 @@ Struttura documento METS ECO-MiC:
   },
   
   // Audit
-  created_at: ISODate("2024-12-15T10:00:00Z"),
-  updated_at: ISODate("2024-12-15T10:00:00Z"),
+  created_at: ISODate("2025-12-15T10:00:00Z"),
+  updated_at: ISODate("2025-12-15T10:00:00Z"),
   
   // Cross-references
   platform_document_id: 123,  // PostgreSQL documents.id

@@ -1,6 +1,6 @@
 # Riorganizzazione Documentazione Completata
 
-**Data**: 15 Dicembre 2024
+**Data**: 15 Dicembre 2025
 
 ## Panoramica
 
@@ -78,10 +78,10 @@ docs/
 File: `/docs/CHANGELOG.md`
 
 **Contenuto**:
-- Versione 2.0.0 (15 Dicembre 2024): Ricerca, Import Metadati, Ant Design
-- Versione 1.2.0 (Novembre 2024): Dual-Database, METS ECO-MiC
-- Versione 1.1.0 (Ottobre 2024): Sistema base, CRUD, File management
-- Versione 1.0.0 (Settembre 2024): Setup iniziale
+- Versione 2.0.0 (15 Dicembre 2025): Ricerca, Import Metadati, Ant Design
+- Versione 1.2.0 (Novembre 2025): Dual-Database, METS ECO-MiC
+- Versione 1.1.0 (Ottobre 2025): Sistema base, CRUD, File management
+- Versione 1.0.0 (Settembre 2025): Setup iniziale
 
 Formato standard con categorie: **Aggiunte**, **Migliorate**, **Fix**
 

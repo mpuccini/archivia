@@ -1,6 +1,6 @@
 # Implementazione Ricerca Documenti - MongoDB Full-Text Search
 
-**Data Implementazione:** 15 Dicembre 2024
+**Data Implementazione:** 15 Dicembre 2025
 **Stato:** ✅ Backend Completato | ✅ Frontend Completato
 
 ---
@@ -156,8 +156,8 @@ async def search_documents(
       "archive_name": "Archivio di Stato di Modena",
       "fund_name": "Fondo Estense",
       "schema_version": "1.1",
-      "created_at": "2024-12-15T10:30:00",
-      "updated_at": "2024-12-15T10:30:00",
+      "created_at": "2025-12-15T10:30:00",
+      "updated_at": "2025-12-15T10:30:00",
       "file_count": 5,
       "search_score": 0.95    // Solo se query full-text
     }

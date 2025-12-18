@@ -4,11 +4,11 @@ Documentazione dettagliata di tutte le implementazioni e interventi tecnici.
 
 ---
 
-## Dicembre 2024
+## Dicembre 2025
 
 ### Ricerca Documenti - MongoDB Full-Text Search
 
-**Data**: 15 Dicembre 2024  
+**Data**: 15 Dicembre 2025  
 **File Tecnico**: `DOCUMENT_SEARCH_IMPLEMENTATION.md`
 
 #### Implementazione
@@ -25,7 +25,7 @@ Documentazione dettagliata di tutte le implementazioni e interventi tecnici.
 
 ### Import Metadati da ZIP
 
-**Data**: 15 Dicembre 2024  
+**Data**: 15 Dicembre 2025  
 **File Tecnico**: `METADATA_IMPORT_IMPLEMENTATION.md`
 
 #### Implementazione
@@ -42,7 +42,7 @@ Documentazione dettagliata di tutte le implementazioni e interventi tecnici.
 
 ### Migrazione Ant Design Vue
 
-**Data**: Novembre-Dicembre 2024  
+**Data**: Novembre-Dicembre 2025  
 **File Tecnici**: `ANT_DESIGN_MIGRATION_*.md`
 
 #### Implementazione
@@ -61,7 +61,7 @@ Documentazione dettagliata di tutte le implementazioni e interventi tecnici.
 
 ---
 
-## Novembre 2024
+## Novembre 2025
 
 ### Architettura Dual-Database
 
@@ -78,7 +78,7 @@ Documentazione dettagliata di tutte le implementazioni e interventi tecnici.
 
 ---
 
-## Ottobre 2024
+## Ottobre 2025
 
 ### METS ECO-MiC 1.1
 

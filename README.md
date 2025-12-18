@@ -76,7 +76,7 @@ docker compose exec db psql -U archivia -d archivia
 
 ## Licenza
 
-Copyright © 2024 Archivia Project
+Copyright © 2025 Archivia Project
 
 ## Link Utili
 

@@ -1,6 +1,6 @@
 # DocumentsManager Migration to Ant Design - Completato
 
-**Data:** 14 Dicembre 2024
+**Data:** 14 Dicembre 2025
 **Componente:** DocumentsManager.vue
 **Stato:** ✅ Migrazione Completata
 

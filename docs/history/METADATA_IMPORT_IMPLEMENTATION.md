@@ -1,6 +1,6 @@
 # Implementazione Import Metadati da Cartella ZIP
 
-**Data Implementazione:** 15 Dicembre 2024
+**Data Implementazione:** 15 Dicembre 2025
 **Stato:** ✅ Completato
 
 ---

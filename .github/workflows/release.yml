@@ -1,0 +1,56 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Extract changelog for this version
+        id: changelog
+        run: |
+          # Extract changelog section for current version
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+
+          # Try to extract the section for this version from CHANGELOG.md
+          if [ -f "docs/CHANGELOG.md" ]; then
+            # Extract content between this version header and the next version header
+            CHANGELOG=$(awk "/^## \[${VERSION}\]/{found=1; next} /^## \[/{found=0} found" docs/CHANGELOG.md)
+
+            if [ -z "$CHANGELOG" ]; then
+              CHANGELOG="Release version ${VERSION}"
+            fi
+          else
+            CHANGELOG="Release version ${VERSION}"
+          fi
+
+          # Write to file to preserve formatting
+          echo "$CHANGELOG" > /tmp/changelog.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: "Archivia v${{ steps.get_version.outputs.VERSION }}"
+          body_path: /tmp/changelog.md
+          draft: false
+          prerelease: ${{ contains(github.ref, '-alpha') || contains(github.ref, '-beta') || contains(github.ref, '-rc') }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
