@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
 import Antd from 'ant-design-vue'
 import 'ant-design-vue/dist/reset.css'
-import './assets/css/tailwind.css' // Keep for Ant Design customizations
+import './assets/css/app.css' // Custom styles and Ant Design customizations
 
 import App from './App.vue'
 import Login from './components/Login.vue'
