@@ -61,6 +61,33 @@ mkdocs build
 - **Storage**: MinIO (S3-compatible)
 - **Deployment**: Docker Compose
 
+## Gestione Utenti
+
+Archivia utilizza un sistema di autenticazione semplice. Per creare un utente:
+
+```bash
+# Creazione interattiva (consigliato)
+docker compose exec backend python create_admin.py
+```
+
+Lo script ti chiederà:
+1. **Username** (default: `admin`)
+2. **Password** (minimo 8 caratteri, richiesta conferma)
+
+Se l'utente esiste già, puoi scegliere di resettare la password.
+
+### Reset Password
+
+Per resettare la password di un utente esistente, esegui nuovamente lo script e conferma il reset quando richiesto.
+
+### Primo Avvio
+
+Dopo aver avviato i servizi con `docker compose up -d`, **devi creare almeno un utente** prima di poter accedere all'applicazione:
+
+```bash
+docker compose exec backend python create_admin.py
+```
+
 ## Sviluppo
 
 ```bash
