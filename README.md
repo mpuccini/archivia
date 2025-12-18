@@ -103,7 +103,7 @@ docker compose exec db psql -U archivia -d archivia
 
 ## Licenza
 
-Copyright © 2025 Ass. Arca sul Lago
+Copyright © 2025 [Ass. Arca sul Lago](https://www.facebook.com/arca.sullago.3)
 
 Questo progetto è rilasciato sotto la **European Union Public Licence (EUPL) v. 1.2**.
 
