@@ -105,6 +105,12 @@ docker compose exec db psql -U archivia -d archivia
 
 Copyright © 2025 Archivia Project
 
+Questo progetto è rilasciato sotto la **European Union Public Licence (EUPL) v. 1.2**.
+
+Vedi il file [LICENSE](LICENSE) per il testo completo della licenza.
+
+Per maggiori informazioni: https://interoperable-europe.ec.europa.eu/licence/european-union-public-licence-version-12-eupl
+
 ## Link Utili
 
 - [METS Standard](http://www.loc.gov/standards/mets/)
